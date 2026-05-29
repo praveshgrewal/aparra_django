@@ -8,68 +8,66 @@ from django.contrib import messages
 from .models import Product, Category, Metal, Purity, Order, Discount, KeyValueStore, Wishlist
 from .cart import Cart
 from django.utils import timezone
+from django.core.cache import cache
+
+CACHE_TTL = 300  # 5 minutes
+
+
+def _get_kv(key, default=None):
+    val = cache.get(f'kv_{key}')
+    if val is None:
+        try:
+            val = KeyValueStore.objects.get(key=key).value
+        except KeyValueStore.DoesNotExist:
+            val = default or {}
+        cache.set(f'kv_{key}', val, CACHE_TTL)
+    return val
 
 
 def get_homepage_content():
-    try:
-        kv = KeyValueStore.objects.get(key='homepage_content')
-        return kv.value
-    except KeyValueStore.DoesNotExist:
-        return {}
+    return _get_kv('homepage_content')
 
 
 def get_shop_content():
-    try:
-        kv = KeyValueStore.objects.get(key='shop_page_content')
-        return kv.value
-    except KeyValueStore.DoesNotExist:
-        return {}
+    return _get_kv('shop_page_content')
 
 
 def get_footer_content():
-    try:
-        kv = KeyValueStore.objects.get(key='footer_content')
-        return kv.value
-    except KeyValueStore.DoesNotExist:
-        return {}
+    return _get_kv('footer_content')
 
 
 def get_theme_settings():
-    try:
-        kv = KeyValueStore.objects.get(key='theme_settings')
-        return kv.value
-    except KeyValueStore.DoesNotExist:
-        return {'activeHomepageTheme': 'default', 'activeProductTheme': 'default'}
+    return _get_kv('theme_settings', {'activeHomepageTheme': 'default', 'activeProductTheme': 'default'})
 
 
 def get_minimalist_content():
-    try:
-        kv = KeyValueStore.objects.get(key='minimalist_homepage_content')
-        return kv.value
-    except KeyValueStore.DoesNotExist:
-        return {}
+    return _get_kv('minimalist_homepage_content')
 
 
 def homepage(request):
     from blog.models import BlogPost
-    theme_settings = get_theme_settings()
-    active_theme = theme_settings.get('activeHomepageTheme', 'default')
-    products = Product.objects.filter(is_active=True)
-    newest_products = products.order_by('-created_at')[:10]
-    best_sellers = products.order_by('-display_price')[:10]
-    categories = Category.objects.filter(is_active=True)[:12]
-    blog_posts = BlogPost.objects.filter(status='published').order_by('-published_at')[:3]
-    context = {
-        'theme_settings': theme_settings,
-        'active_theme': active_theme,
-        'homepage_content': get_homepage_content(),
-        'minimalist_content': get_minimalist_content() if active_theme == 'minimalist' else {},
-        'newest_products': newest_products,
-        'best_sellers': best_sellers,
-        'categories': categories,
-        'blog_posts': blog_posts,
-        'footer_content': get_footer_content(),
-    }
+
+    # Cache the full homepage context data
+    cached = cache.get('homepage_data')
+    if cached is None:
+        theme_settings = get_theme_settings()
+        active_theme = theme_settings.get('activeHomepageTheme', 'default')
+        newest_products = list(Product.objects.filter(is_active=True).order_by('-created_at')[:10])
+        best_sellers = list(Product.objects.filter(is_active=True).order_by('-display_price')[:10])
+        blog_posts = list(BlogPost.objects.filter(status='published').order_by('-published_at')[:3])
+        cached = {
+            'theme_settings': theme_settings,
+            'active_theme': active_theme,
+            'newest_products': newest_products,
+            'best_sellers': best_sellers,
+            'blog_posts': blog_posts,
+        }
+        cache.set('homepage_data', cached, CACHE_TTL)
+
+    context = dict(cached)
+    context['homepage_content'] = get_homepage_content()
+    context['minimalist_content'] = get_minimalist_content() if cached['active_theme'] == 'minimalist' else {}
+    context['footer_content'] = get_footer_content()
     return render(request, 'store/homepage.html', context)
 
 

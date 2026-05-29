@@ -6,7 +6,17 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
+from django.core.cache import cache
 from functools import wraps
+
+
+def clear_store_cache():
+    cache.delete_many([
+        'nav_categories', 'site_settings', 'homepage_data',
+        'kv_homepage_content', 'kv_minimalist_homepage_content',
+        'kv_theme_settings', 'kv_footer_content',
+        'kv_shop_page_content', 'kv_site_settings', 'kv_settings',
+    ])
 from store.models import (
     Product, Category, Metal, Purity, TaxClass, Order, Discount,
     KeyValueStore, ProductReview, DiamondSeries, Menu
@@ -227,7 +237,7 @@ def category_create(request):
             except Category.DoesNotExist:
                 pass
         cat.save()
-        messages.success(request, 'Category created.')
+        clear_store_cache(); messages.success(request, 'Category created.')
         return redirect('dashboard:category_list')
     return render(request, 'dashboard/categories/form.html', {'parents': parents})
 
@@ -590,6 +600,7 @@ def settings_save(request):
 
     kv.value = settings_data
     kv.save()
+    clear_store_cache()
     messages.success(request, 'Settings saved.')
     return redirect('dashboard:settings')
 
@@ -703,6 +714,7 @@ def appearance_save(request):
         kv.save()
         messages.success(request, 'Footer settings saved.')
 
+    clear_store_cache()
     return redirect('dashboard:appearance')
 
 
@@ -779,6 +791,7 @@ def homepage_content_save(request):
     except Exception:
         kv.value = {}
     kv.save()
+    clear_store_cache()
     return JsonResponse({'success': True})
 
 
@@ -1281,5 +1294,6 @@ def minimalist_editor_save(request):
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or section:
         return JsonResponse({'success': True})
+    clear_store_cache()
     messages.success(request, 'Minimalist content saved.')
     return redirect('dashboard:minimalist_editor')
