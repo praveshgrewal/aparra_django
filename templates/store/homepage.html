@@ -1,0 +1,680 @@
+{% extends 'base.html' %}
+{% block title %}Aparra Jewellery - Timeless Elegance{% endblock %}
+
+{% block content %}
+
+{% if active_theme == 'minimalist' %}
+{% with mc=minimalist_content %}
+<div class="bg-background">
+
+{# ===== 1. HERO ===== #}
+{% if mc.hero.enabled %}
+<section class="bg-background px-6 pt-6">
+  <div class="relative w-full overflow-hidden" id="hero-carousel">
+    <div class="flex transition-transform duration-700 ease-in-out" id="hero-track">
+      {% for slide in mc.hero.slides %}
+      <div class="relative flex-shrink-0 w-full h-[80vh] md:h-[75vh] rounded-3xl overflow-hidden flex items-center">
+        {% if slide.type == 'video' and slide.videoUrl %}
+          {% if 'youtube.com' in slide.videoUrl or 'youtu.be' in slide.videoUrl %}
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-[1.35]" style="width:177.78vh;height:100vh">
+            <iframe src="{{ slide.videoUrl }}?autoplay=1&mute=1&loop=1&controls=0&rel=0&playsinline=1&modestbranding=1"
+                    class="w-full h-full pointer-events-none" frameborder="0"
+                    allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Hero Video"></iframe>
+          </div>
+          {% else %}
+          <video src="{{ slide.videoUrl }}" class="absolute inset-0 w-full h-full object-cover" autoplay loop muted playsinline></video>
+          {% endif %}
+        {% else %}
+        <img src="{{ slide.imageUrl }}" alt="{{ slide.title }}" class="absolute inset-0 w-full h-full object-cover">
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-r from-foreground/45 to-transparent"></div>
+        <div class="relative z-10 max-w-md md:max-w-xl p-6 md:p-12 text-primary-foreground">
+          <h1 class="font-serif text-4xl md:text-5xl leading-tight">{{ slide.title }}</h1>
+          <p class="mt-4 text-primary-foreground/85">{{ slide.subtitle }}</p>
+          <a href="{{ slide.cta.href }}" class="inline-block mt-6 rounded-full bg-primary-foreground px-6 py-3 text-sm font-medium text-foreground">
+            {{ slide.cta.label }}
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button onclick="heroNav(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center text-primary-foreground transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button onclick="heroNav(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center text-primary-foreground transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 2. DIAMOND INTERPRETATIONS ===== #}
+{% if mc.diamond_interpretations.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-20">
+  {% if mc.diamond_interpretations.title %}
+  <h2 class="mb-10 text-center font-serif text-2xl md:text-3xl">{{ mc.diamond_interpretations.title }}</h2>
+  {% endif %}
+  <div class="relative overflow-hidden" id="di-carousel">
+    <div class="flex gap-4 transition-transform duration-500" id="di-track">
+      {% for card in mc.diamond_interpretations.cards %}
+      <div class="flex-shrink-0 w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] p-1">
+        <a href="{{ card.href }}" class="group rounded-2xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow block">
+          <div class="relative aspect-[4/5]">
+            <img src="{{ card.image }}" alt="{{ card.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+          </div>
+          <div class="p-6 text-center">
+            <p class="font-medium">{{ card.title }}</p>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    <button onclick="carouselNav('di-track','di-carousel',-1)" class="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button onclick="carouselNav('di-track','di-carousel',1)" class="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 3. SIGNATURE COLLECTIONS ===== #}
+{% if mc.signature_collections.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-28">
+  {% if mc.signature_collections.title %}
+  <h2 class="mb-12 text-center font-serif text-2xl md:text-3xl">{{ mc.signature_collections.title }}</h2>
+  {% endif %}
+  {% with primary=mc.signature_collections.collections.primary secondary=mc.signature_collections.collections.secondary %}
+  <div class="grid gap-10 md:grid-cols-2">
+    <a href="{{ primary.href }}" class="group relative h-[400px] md:h-[520px] overflow-hidden rounded-3xl block">
+      {% if primary.type == 'video' and primary.videoUrl %}
+      <video src="{{ primary.videoUrl }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoplay loop muted playsinline></video>
+      {% else %}
+      <img src="{{ primary.image }}" alt="{{ primary.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+      {% endif %}
+      <div class="absolute inset-0 bg-foreground/20"></div>
+      <div class="absolute bottom-8 left-8 z-10 text-primary-foreground">
+        <p class="font-serif text-3xl">{{ primary.title }}</p>
+      </div>
+    </a>
+    <div class="grid gap-10">
+      {% for item in secondary %}
+      <a href="{{ item.href }}" class="group relative h-[190px] md:h-[245px] overflow-hidden rounded-3xl block">
+        <img src="{{ item.image }}" alt="{{ item.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+        <div class="absolute inset-0 bg-foreground/15"></div>
+        <div class="absolute bottom-6 left-6 z-10 text-primary-foreground">
+          <p class="font-serif text-xl">{{ item.title }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endwith %}
+</section>
+{% endif %}
+
+{# ===== 4. CATEGORY GRID WITH TRENDING ===== #}
+{% if mc.category_grid_with_trending.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-28">
+  {% with cats=mc.category_grid_with_trending.categories trending=mc.category_grid_with_trending.trending %}
+  {% if cats.title %}
+  <h2 class="mb-12 text-center font-serif text-2xl md:text-3xl">{{ cats.title }}</h2>
+  {% endif %}
+  <div class="grid grid-cols-3 gap-4 md:grid-cols-6 md:gap-8">
+    {% for item in cats.items %}
+    <a href="{{ item.href }}" class="group rounded-2xl bg-card p-2 md:p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div class="relative h-20 md:h-32 overflow-hidden rounded-xl">
+        <img src="{{ item.image }}" alt="{{ item.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+      </div>
+      <p class="mt-4 text-center text-sm font-medium">{{ item.title }}</p>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="mt-16 md:mt-24">
+    {% if trending.title %}
+    <h3 class="mb-10 text-center font-serif text-xl md:text-2xl">{{ trending.title }}</h3>
+    {% endif %}
+    <div class="grid gap-8 md:grid-cols-3">
+      {% for item in trending.items %}
+      <a href="{{ item.href }}" class="group overflow-hidden rounded-3xl bg-card shadow-sm hover:shadow-md transition-shadow block">
+        <div class="relative h-80">
+          <img src="{{ item.image }}" alt="{{ item.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+        </div>
+        <div class="p-6 text-center">
+          <p class="font-medium">{{ item.title }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endwith %}
+</section>
+{% endif %}
+
+{# ===== 5. NEWEST PRODUCTS CAROUSEL ===== #}
+{% if mc.newestProducts.enabled and newest_products %}
+<section class="bg-background py-20">
+  <div class="container mx-auto px-6">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="font-serif text-2xl md:text-3xl">{{ mc.newestProducts.title|default:"New Arrivals" }}</h2>
+      <a href="{% url 'store:shop' %}" class="text-sm text-muted-foreground hover:text-primary transition-colors">View All →</a>
+    </div>
+    <div class="relative overflow-hidden" id="newest-wrap">
+      <div class="flex gap-4 transition-transform duration-500" id="newest-track">
+        {% for product in newest_products %}
+        <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
+          {% include 'partials/product_card.html' %}
+        </div>
+        {% endfor %}
+      </div>
+      <button onclick="carouselNav('newest-track','newest-wrap',-1)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button onclick="carouselNav('newest-track','newest-wrap',1)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 6. WORLD OF BRAND ===== #}
+{% if mc.world_of_brand.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-28">
+  <h2 class="mb-12 text-center font-serif text-2xl md:text-3xl">{{ mc.world_of_brand.title }}</h2>
+  <div class="grid gap-10 md:grid-cols-2">
+    {% for item in mc.world_of_brand.items %}
+    <a href="{{ item.href }}" class="group relative h-[300px] md:h-[420px] overflow-hidden rounded-3xl block">
+      <img src="{{ item.image }}" alt="{{ item.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+      <div class="absolute inset-0 bg-foreground/25 transition group-hover:bg-foreground/35"></div>
+      <div class="absolute bottom-8 left-8 z-10 text-primary-foreground">
+        <p class="font-serif text-3xl">{{ item.title }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ===== 7. BEST SELLERS CAROUSEL ===== #}
+{% if mc.bestSellers.enabled and best_sellers %}
+<section class="bg-background py-20">
+  <div class="container mx-auto px-6">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="font-serif text-2xl md:text-3xl">{{ mc.bestSellers.title|default:"Best Sellers" }}</h2>
+      <a href="{% url 'store:shop' %}" class="text-sm text-muted-foreground hover:text-primary transition-colors">View All →</a>
+    </div>
+    <div class="relative overflow-hidden" id="bestsellers-wrap">
+      <div class="flex gap-4 transition-transform duration-500" id="bestsellers-track">
+        {% for product in best_sellers %}
+        <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
+          {% include 'partials/product_card.html' %}
+        </div>
+        {% endfor %}
+      </div>
+      <button onclick="carouselNav('bestsellers-track','bestsellers-wrap',-1)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button onclick="carouselNav('bestsellers-track','bestsellers-wrap',1)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 8. IMAGE SLIDER ===== #}
+{% if mc.imageSlider.enabled %}
+<section class="bg-secondary py-16 md:py-20">
+  <div class="container mx-auto px-6">
+    <div class="flex flex-col md:flex-row items-center gap-8">
+      <div class="w-full md:w-1/3 text-center md:text-left">
+        <p class="text-sm uppercase tracking-wider text-muted-foreground">{{ mc.imageSlider.eyebrow }}</p>
+        <h2 class="text-4xl md:text-5xl font-serif text-foreground mt-2">{{ mc.imageSlider.title }}</h2>
+        {% if mc.imageSlider.ctaLink %}
+        <a href="{{ mc.imageSlider.ctaLink }}" class="inline-block mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-sm font-medium transition-colors">
+          {{ mc.imageSlider.ctaText }}
+        </a>
+        {% endif %}
+      </div>
+      <div class="w-full md:w-2/3 relative overflow-hidden" id="imgslider-wrap">
+        <div class="flex gap-4 transition-transform duration-500" id="imgslider-track">
+          {% for item in mc.imageSlider.items %}
+          <a href="{{ item.link }}" class="flex-shrink-0 w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]">
+            <div class="aspect-[4/5] relative rounded-lg overflow-hidden group">
+              <img src="{{ item.imageUrl }}" alt="{{ item.imageHint }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        <button onclick="carouselNav('imgslider-track','imgslider-wrap',-1)" class="hidden md:flex absolute -left-12 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <button onclick="carouselNav('imgslider-track','imgslider-wrap',1)" class="hidden md:flex absolute -right-12 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 9. SPLIT BANNER ===== #}
+{% if mc.splitBanner.enabled %}
+<section class="bg-background mt-16 md:mt-20">
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {% for banner in mc.splitBanner.banners %}
+      <div class="relative group overflow-hidden rounded-3xl" style="aspect-ratio:4/5">
+        <img src="{{ banner.imageUrl }}" alt="{{ banner.imageHint }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+        <div class="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent flex flex-col justify-end p-6 md:p-8 text-primary-foreground">
+          <h3 class="text-2xl md:text-3xl font-serif">{{ banner.title }}</h3>
+          <p class="mt-2 max-w-sm">{{ banner.description }}</p>
+          <a href="{{ banner.buttonLink }}" class="inline-block mt-4 w-fit border border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-foreground px-4 py-2 rounded-md text-sm font-medium bg-transparent transition-colors">
+            {{ banner.buttonLabel }}
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 10. TEXT HIGHLIGHTS ===== #}
+{% if mc.textHighlights.enabled %}
+<section class="bg-secondary py-12 md:py-16">
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      {% for item in mc.textHighlights.items %}
+      <div class="text-center">
+        <h3 class="font-semibold text-lg">{{ item.title }}</h3>
+        <p class="text-muted-foreground mt-1 text-sm">{{ item.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 11. IMAGE GRID ===== #}
+{% if mc.imageGrid.enabled %}
+<section class="bg-background mt-16 md:mt-20">
+  <div class="container mx-auto px-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for item in mc.imageGrid.items %}
+      {% if item.type == 'text' %}
+      <div class="p-8 flex flex-col justify-center items-center text-center h-full bg-secondary/80 rounded-2xl" style="aspect-ratio:4/5">
+        <h3 class="font-serif text-2xl">{{ item.title }}</h3>
+        <p class="mt-2 text-muted-foreground">{{ item.content }}</p>
+        <a href="{{ item.buttonLink }}" class="mt-4 text-foreground hover:underline font-medium">{{ item.buttonLabel }}</a>
+      </div>
+      {% else %}
+      <div class="aspect-[4/5] relative rounded-2xl overflow-hidden group">
+        <img src="{{ item.imageUrl }}" alt="{{ item.imageHint }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 12. INSTAGRAM ===== #}
+{% if mc.instagram.enabled %}
+<section class="bg-secondary py-16 md:py-20">
+  <div class="container mx-auto px-6 text-center">
+    <h2 class="text-2xl md:text-3xl font-serif text-center mb-2">Join Our Instagram</h2>
+    <p class="text-muted-foreground mb-8">{{ mc.instagram.handle }}</p>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {% for imageUrl in mc.instagram.postImageUrls %}
+      <a href="#" class="group">
+        <div class="aspect-square relative overflow-hidden rounded-lg">
+          <img src="{{ imageUrl }}" alt="Instagram post {{ forloop.counter }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <a href="#" class="inline-block mt-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 text-sm font-medium transition-colors">Follow Us</a>
+  </div>
+</section>
+{% endif %}
+
+{# ===== 13. TESTIMONIALS ===== #}
+{% if mc.testimonials.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-28">
+  <h2 class="text-center font-serif text-2xl md:text-3xl mb-12">{{ mc.testimonials.title }}</h2>
+  <div class="grid md:grid-cols-3 gap-8">
+    {% for item in mc.testimonials.items %}
+    <div class="bg-card p-6 md:p-8 rounded-2xl shadow-sm text-center">
+      <div class="flex justify-center mb-4">
+        <img src="{{ item.imageUrl }}" alt="{{ item.name }}" class="w-20 h-20 rounded-full object-cover">
+      </div>
+      <p class="italic text-foreground/80">"{{ item.text }}"</p>
+      <div class="mt-6">
+        <div class="flex justify-center mb-2 gap-0.5">
+          {% for i in "12345" %}
+          {% if forloop.counter <= item.rating %}
+          <svg class="h-5 w-5 text-primary fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          {% else %}
+          <svg class="h-5 w-5 text-border" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          {% endif %}
+          {% endfor %}
+        </div>
+        <p class="font-semibold">{{ item.name }}</p>
+        <p class="text-sm text-muted-foreground">{{ item.location }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ===== 14. ASSURANCE & EXCHANGE ===== #}
+{% if mc.assurance_and_exchange.enabled %}
+{% with ae=mc.assurance_and_exchange %}
+<section class="bg-background px-6 mt-16 md:mt-32">
+  <h2 class="mb-12 text-center font-serif text-2xl md:text-3xl">{{ ae.assurance.title }}</h2>
+  <div class="grid gap-10 md:grid-cols-3">
+    {% for item in ae.assurance.items %}
+    <div class="rounded-3xl bg-card p-6 md:p-10 text-center shadow-sm">
+      <div class="mx-auto mb-6 h-14 w-14 flex items-center justify-center">
+        {% if item.icon == 'award' %}
+        <svg class="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+        {% elif item.icon == 'wrench' %}
+        <svg class="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        {% elif item.icon == 'replace' %}
+        <svg class="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        {% else %}
+        <svg class="h-10 w-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
+        {% endif %}
+      </div>
+      <p class="font-medium">{{ item.title }}</p>
+      <p class="mt-2 text-sm text-muted-foreground">{{ item.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="mt-16 md:mt-24 grid gap-10 md:grid-cols-2 items-center">
+    <div class="relative h-[300px] md:h-[420px] overflow-hidden rounded-3xl">
+      <img src="{{ ae.exchange.image }}" alt="{{ ae.exchange.title }}" class="absolute inset-0 w-full h-full object-cover">
+    </div>
+    <div class="max-w-md">
+      <h3 class="font-serif text-2xl md:text-3xl">{{ ae.exchange.title }}</h3>
+      <p class="mt-4 text-muted-foreground">{{ ae.exchange.subtitle }}</p>
+      {% if ae.exchange.cta.href %}
+      <a href="{{ ae.exchange.cta.href }}" class="inline-block mt-6 rounded-full bg-primary px-6 py-3 text-sm text-primary-foreground">{{ ae.exchange.cta.label }}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endwith %}
+{% endif %}
+
+{# ===== 15. JOURNAL ===== #}
+{% if mc.journal.enabled %}
+<section class="bg-background px-6 mt-16 md:mt-28">
+  {% if blog_posts %}
+  <h2 class="text-center font-serif text-2xl md:text-3xl mb-12">{{ mc.journal.title|default:"From Our Journal" }}</h2>
+  <div class="grid md:grid-cols-3 gap-8">
+    {% for post in blog_posts %}
+    <a href="{% url 'blog:detail' post.slug %}" class="group rounded-3xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow block">
+      <div class="relative h-60">
+        {% if post.featured_image_url %}
+        <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+        {% else %}
+        <div class="absolute inset-0 bg-secondary flex items-center justify-center text-4xl">✍️</div>
+        {% endif %}
+      </div>
+      <div class="p-6">
+        <h3 class="font-serif text-xl">{{ post.title }}</h3>
+        <p class="text-sm mt-2 text-muted-foreground line-clamp-2">{{ post.excerpt }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-12">
+    <a href="{% url 'blog:list' %}" class="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm hover:bg-secondary transition-colors">
+      View All Posts
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+  {% else %}
+  <div class="relative overflow-hidden rounded-3xl bg-secondary">
+    <div class="flex flex-col md:flex-row items-center gap-8 px-10 py-16 md:py-20">
+      <div class="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-background shadow-sm">
+        <svg class="h-9 w-9 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      </div>
+      <div class="text-center md:text-left">
+        <p class="text-xs uppercase tracking-widest text-muted-foreground mb-2">Our Journal</p>
+        <h2 class="font-serif text-3xl md:text-4xl text-foreground">{{ mc.journal.title|default:"Stories, Tips & Inspiration" }}</h2>
+        <p class="mt-3 text-muted-foreground max-w-md">Explore jewellery care guides, style tips, and stories from our artisans.</p>
+        <a href="{% url 'blog:list' %}" class="inline-flex items-center gap-2 mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-7 py-3 text-sm font-medium transition-colors">
+          Visit Our Blog
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ===== 16. GIFTS & EXPERIENCES ===== #}
+{% if mc.gifts_and_experiences.enabled %}
+{% with ge=mc.gifts_and_experiences %}
+<section class="bg-background px-6 mt-16 md:mt-32 mb-16 md:mb-32">
+  <div class="grid gap-12 md:grid-cols-2 items-stretch">
+    <div class="relative h-[420px] md:h-[520px] overflow-hidden rounded-3xl">
+      <img src="{{ ge.gift.image }}" alt="{{ ge.gift.title }}" class="absolute inset-0 w-full h-full object-cover">
+      <div class="absolute inset-0 bg-foreground/20"></div>
+      <div class="absolute bottom-10 left-10 z-10 max-w-sm text-primary-foreground">
+        <h2 class="font-serif text-4xl leading-tight">{{ ge.gift.title }}</h2>
+        <p class="mt-4 text-primary-foreground/85">{{ ge.gift.subtitle }}</p>
+        {% if ge.gift.cta.href %}
+        <a href="{{ ge.gift.cta.href }}" class="inline-block mt-6 rounded-full bg-primary-foreground px-6 py-3 text-sm font-medium text-foreground">{{ ge.gift.cta.label }}</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="flex flex-col justify-center">
+      <h3 class="mb-8 font-serif text-2xl md:text-3xl">{{ ge.experiences.title }}</h3>
+      <div class="grid gap-6">
+        {% for item in ge.experiences.items %}
+        <a href="{{ item.href }}" class="group flex items-center gap-6 overflow-hidden rounded-2xl bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
+          <div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
+            <img src="{{ item.image }}" alt="{{ item.title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+          </div>
+          <div>
+            <p class="font-medium">{{ item.title }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">{{ item.subtitle }}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endwith %}
+{% endif %}
+
+</div>
+{% endwith %}
+
+{% else %}
+{# ===== DEFAULT THEME ===== #}
+<main class="flex flex-col space-y-12 md:space-y-20 md:mb-20">
+
+{# HERO #}
+{% with hero=homepage_content.hero slider=homepage_content.heroSlider %}
+{% if slider and slider.items %}
+<section class="w-full relative overflow-hidden" id="hero-slider">
+  <div class="relative w-full" style="aspect-ratio:16/7">
+    <div class="flex transition-transform duration-700" id="hero-track">
+      {% for item in slider.items %}
+      <div class="relative w-full flex-shrink-0" style="width:100%;aspect-ratio:16/7">
+        <img src="{{ item.imageUrl }}" alt="{{ item.imageHint|default:'Slide' }}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/1400x600/2a2018/ffffff?text=Aparra'">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="absolute inset-0 z-10 flex flex-col items-start justify-center p-8 md:p-16 lg:p-24 text-left">
+          <h2 class="max-w-2xl text-3xl font-bold font-headline md:text-5xl lg:text-6xl text-white">{{ item.title }}</h2>
+          <p class="mt-4 max-w-lg text-sm md:text-lg text-white/90">{{ item.subtitle }}</p>
+          <a href="{{ item.ctaLink|default:'/shop/' }}" class="mt-8 inline-block bg-white text-foreground hover:bg-white/90 font-semibold px-6 py-3 rounded-md text-base transition-colors">{{ item.ctaText|default:'Shop Now' }}</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button onclick="heroSlide(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button onclick="heroSlide(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2" id="hero-dots"></div>
+  </div>
+</section>
+{% else %}
+<section class="relative w-full h-screen overflow-hidden bg-black">
+  <div class="absolute inset-0 bg-gradient-to-br from-[hsl(35,33%,10%)] via-[hsl(35,33%,15%)] to-[hsl(40,30%,20%)]"></div>
+  <div class="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-6">
+    <h1 class="font-headline uppercase font-bold text-6xl md:text-9xl leading-none">Aparra</h1>
+    <p class="mt-4 max-w-2xl tracking-wider">Crafted with passion, worn with pride</p>
+    <a href="{% url 'store:shop' %}" class="mt-8 inline-block bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-8 py-4 rounded-md transition-colors">Explore Collection</a>
+  </div>
+</section>
+{% endif %}
+{% endwith %}
+
+{% if newest_products %}
+<section class="w-full">
+  <div class="container mx-auto px-4">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-bold font-headline">New Arrivals</h2>
+      <a href="{% url 'store:shop' %}" class="inline-flex items-center gap-2 border border-border text-foreground hover:bg-secondary px-4 py-2 rounded-md text-sm font-medium transition-colors">View All</a>
+    </div>
+    <div class="relative overflow-hidden" id="newest-wrap">
+      <div class="flex gap-4 transition-transform duration-500" id="newest-track">
+        {% for product in newest_products %}
+        <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
+          {% include 'partials/product_card.html' %}
+        </div>
+        {% endfor %}
+      </div>
+      <button onclick="carouselNav('newest-track','newest-wrap',-1)" class="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-secondary rounded-full w-10 h-10 items-center justify-center shadow-md border border-border transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button onclick="carouselNav('newest-track','newest-wrap',1)" class="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-secondary rounded-full w-10 h-10 items-center justify-center shadow-md border border-border transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if blog_posts %}
+<section class="bg-background">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-headline text-center mb-8">From Our Journal</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {% for post in blog_posts %}
+      <a href="{% url 'blog:detail' post.slug %}" class="group overflow-hidden rounded-lg block">
+        <div class="aspect-video relative overflow-hidden bg-muted">
+          {% if post.featured_image_url %}
+          <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+          {% endif %}
+        </div>
+        <div class="p-4 text-center">
+          <h3 class="font-semibold text-xl font-headline">{{ post.title }}</h3>
+          <p class="text-muted-foreground text-sm mt-2">{{ post.excerpt }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-8">
+      <a href="{% url 'blog:list' %}" class="inline-flex items-center gap-2 border border-border text-foreground hover:bg-secondary px-6 py-3 rounded-md font-medium transition-colors">View All Posts</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+</main>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function addToCart(productId, price) {
+  fetch("{% url 'store:cart_add' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({product_id: productId, quantity: 1, price: price})
+  }).then(r => r.json()).then(data => {
+    if (data.success) { updateCartBadge(data.cart_count); showToast('Added to cart!'); }
+  });
+}
+
+function toggleWishlist(e, productId) {
+  e.preventDefault(); e.stopPropagation();
+  fetch("{% url 'store:wishlist_toggle' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({product_id: productId})
+  }).then(r => r.json()).then(data => { showToast(data.added ? 'Added to wishlist!' : 'Removed from wishlist'); });
+}
+
+// Scroll-based carousel (used by product carousels, image sliders, etc.)
+function carouselNav(trackId, wrapId, dir) {
+  const track = document.getElementById(trackId);
+  const wrap = document.getElementById(wrapId);
+  if (!track || !wrap) return;
+  const item = track.querySelector(':scope > *');
+  if (!item) return;
+  const itemWidth = item.offsetWidth + 16;
+  const maxOffset = track.scrollWidth - wrap.offsetWidth;
+  const current = parseInt(track.dataset.offset || '0');
+  let next = current + dir * itemWidth * 2;
+  next = Math.max(0, Math.min(next, maxOffset));
+  track.dataset.offset = next;
+  track.style.transform = `translateX(-${next}px)`;
+}
+
+// Hero carousel (full-slide)
+(function() {
+  const track = document.getElementById('hero-track');
+  if (!track) return;
+  const slides = track.querySelectorAll(':scope > div');
+  if (slides.length <= 1) return;
+  let current = 0;
+  let timer;
+
+  function goTo(n) {
+    current = (n + slides.length) % slides.length;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    clearInterval(timer);
+    timer = setInterval(() => goTo(current + 1), 5000);
+  }
+
+  window.heroNav = (dir) => goTo(current + dir);
+  timer = setInterval(() => goTo(current + 1), 5000);
+  const section = track.closest('section');
+  if (section) {
+    section.addEventListener('mouseenter', () => clearInterval(timer));
+    section.addEventListener('mouseleave', () => { timer = setInterval(() => goTo(current + 1), 5000); });
+  }
+})();
+
+// DI carousel autoplay
+(function() {
+  const track = document.getElementById('di-track');
+  const wrap = document.getElementById('di-carousel');
+  if (!track || !wrap) return;
+  setInterval(() => carouselNav('di-track', 'di-carousel', 1), 3000);
+})();
+
+// Image slider autoplay
+(function() {
+  const track = document.getElementById('imgslider-track');
+  if (!track) return;
+  setInterval(() => carouselNav('imgslider-track', 'imgslider-wrap', 1), 3000);
+})();
+</script>
+{% endblock %}

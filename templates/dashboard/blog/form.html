@@ -1,0 +1,52 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{% if post %}Edit Post{% else %}New Post{% endif %} - Admin{% endblock %}
+{% block page_title %}{% if post %}Edit Post{% else %}New Blog Post{% endif %}{% endblock %}
+{% block content %}
+<form method="post" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  {% csrf_token %}
+  <div class="xl:col-span-2 space-y-4">
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Title *</label>
+        <input type="text" name="title" value="{{ post.title|default:'' }}" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold">
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Slug</label>
+        <input type="text" name="slug" value="{{ post.slug|default:'' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold">
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Excerpt</label>
+        <textarea name="excerpt" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold resize-none">{{ post.excerpt|default:'' }}</textarea>
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Content *</label>
+        <textarea name="content" rows="16" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold">{{ post.content|default:'' }}</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="space-y-4">
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Status</label>
+        <select name="status" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold">
+          <option value="draft" {% if post.status == 'draft' %}selected{% endif %}>Draft</option>
+          <option value="published" {% if post.status == 'published' %}selected{% endif %}>Published</option>
+          <option value="archived" {% if post.status == 'archived' %}selected{% endif %}>Archived</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Author</label>
+        <input type="text" name="author" value="{% if post %}{{ post.author }}{% else %}{{ request.user.name }}{% endif %}" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold">
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-gray-500 block mb-1">Featured Image URL</label>
+        <input type="url" name="featured_image_url" value="{{ post.featured_image_url|default:'' }}" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold">
+      </div>
+      <button type="submit" class="w-full bg-gold text-white font-semibold py-3 rounded-xl hover:bg-gold-dark">
+        {% if post %}Update Post{% else %}Publish Post{% endif %}
+      </button>
+      <a href="{% url 'dashboard:blog_list' %}" class="block text-center text-sm text-gray-400 hover:text-gold">← Back</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

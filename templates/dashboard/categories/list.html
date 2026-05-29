@@ -1,0 +1,37 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Categories - Admin{% endblock %}
+{% block page_title %}Categories{% endblock %}
+{% block content %}
+<div class="flex justify-end mb-4">
+  <a href="{% url 'dashboard:category_create' %}" class="bg-gold text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gold-dark">+ Add Category</a>
+</div>
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+      <tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Parent</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Actions</th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-50">
+      {% for cat in categories %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            {% if cat.image_url %}<img src="{{ cat.image_url }}" class="w-8 h-8 rounded-lg object-cover" onerror="this.style.display='none'">{% endif %}
+            <span class="font-medium">{{ cat.name }}</span>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-gray-400">{{ cat.parent.name|default:"—" }}</td>
+        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs {% if cat.is_active %}bg-green-100 text-green-600{% else %}bg-gray-100 text-gray-500{% endif %}">{% if cat.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+        <td class="px-4 py-3">
+          <div class="flex gap-2">
+            <a href="{% url 'dashboard:category_edit' cat.id %}" class="text-gold hover:underline text-xs">Edit</a>
+            <form method="post" action="{% url 'dashboard:category_delete' cat.id %}" onsubmit="return confirm('Delete?')">{% csrf_token %}<button type="submit" class="text-red-400 hover:text-red-600 text-xs">Delete</button></form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">No categories. <a href="{% url 'dashboard:category_create' %}" class="text-gold">Add one</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

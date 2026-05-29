@@ -1,0 +1,181 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Dashboard - Aparra Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards Row 1 -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+
+  <a href="{% url 'dashboard:report' %}" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Today's Sales</p>
+      <div class="w-8 h-8 rounded-lg bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">₹{{ today_sales|floatformat:0 }}</p>
+    <p class="text-xs text-gray-400 mt-1">Paid orders today →</p>
+  </a>
+
+  <a href="{% url 'dashboard:order_list' %}?status=pending" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pending Orders</p>
+      <div class="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ pending_orders }}</p>
+    <p class="text-xs text-gray-400 mt-1">Awaiting processing →</p>
+  </a>
+
+  <a href="{% url 'dashboard:order_list' %}?status=cancelled" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-red-300 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Today's Cancellations</p>
+      <div class="w-8 h-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ today_cancellations }}</p>
+    <p class="text-xs text-gray-400 mt-1">Cancelled today →</p>
+  </a>
+
+  <a href="{% url 'dashboard:customer_list' %}" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-green-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">New Signups Today</p>
+      <div class="w-8 h-8 rounded-lg bg-green-50 group-hover:bg-green-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ new_signups_today }}</p>
+    <p class="text-xs text-gray-400 mt-1">New accounts today →</p>
+  </a>
+
+</div>
+
+<!-- Stat Cards Row 2 -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+
+  <a href="{% url 'dashboard:customer_list' %}" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-purple-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Signups</p>
+      <div class="w-8 h-8 rounded-lg bg-purple-50 group-hover:bg-purple-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ total_customers }}</p>
+    <p class="text-xs text-gray-400 mt-1">All time customers →</p>
+  </a>
+
+  <a href="{% url 'dashboard:product_list' %}" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Products</p>
+      <div class="w-8 h-8 rounded-lg bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ total_products }}</p>
+    <p class="text-xs text-gray-400 mt-1">Active products →</p>
+  </a>
+
+  <a href="{% url 'dashboard:appearance' %}" class="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl p-5 shadow-sm group hover:shadow-md transition-all">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-amber-100 uppercase tracking-wide">Appearance</p>
+      <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-white">Theme</p>
+    <p class="text-xs text-amber-100 mt-1">Manage store design →</p>
+  </a>
+
+  <a href="{% url 'dashboard:blog_list' %}" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all group">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Posts</p>
+      <div class="w-8 h-8 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
+        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-gray-900">{{ total_posts }}</p>
+    <p class="text-xs text-gray-400 mt-1">Published blog posts →</p>
+  </a>
+
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+  <a href="{% url 'dashboard:product_create' %}" class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-amber-400 hover:shadow-sm transition-all group">
+    <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    </div>
+    <span class="text-sm font-semibold text-gray-700">Add Product</span>
+  </a>
+  <a href="{% url 'dashboard:order_list' %}" class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-amber-400 hover:shadow-sm transition-all group">
+    <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+    <span class="text-sm font-semibold text-gray-700">View Orders</span>
+  </a>
+  <a href="{% url 'dashboard:blog_create' %}" class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-amber-400 hover:shadow-sm transition-all group">
+    <div class="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    </div>
+    <span class="text-sm font-semibold text-gray-700">New Blog Post</span>
+  </a>
+  <a href="{% url 'dashboard:pricing' %}" class="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-amber-400 hover:shadow-sm transition-all group">
+    <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="text-sm font-semibold text-gray-700">Update Pricing</span>
+  </a>
+</div>
+
+<!-- Recent Orders -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <h2 class="font-semibold text-gray-800">Recent Orders</h2>
+    <a href="{% url 'dashboard:order_list' %}" class="text-xs text-amber-600 hover:text-amber-700 font-medium">View All →</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-100">
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Order ID</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        {% for order in recent_orders %}
+        <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="window.location='{% url 'dashboard:order_detail' order.id %}'">
+          <td class="px-6 py-3.5">
+            <span class="text-amber-600 font-mono text-xs">#{{ order.id }}</span>
+          </td>
+          <td class="px-6 py-3.5 text-gray-700">{{ order.customer_name }}</td>
+          <td class="px-6 py-3.5 font-semibold text-gray-800">₹{{ order.total|floatformat:0 }}</td>
+          <td class="px-6 py-3.5">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+              {% if order.status == 'delivered' %}bg-green-100 text-green-700
+              {% elif order.status == 'cancelled' %}bg-red-100 text-red-600
+              {% elif order.status == 'shipped' %}bg-blue-100 text-blue-700
+              {% elif order.status == 'confirmed' %}bg-indigo-100 text-indigo-700
+              {% else %}bg-amber-100 text-amber-700{% endif %}">
+              {{ order.get_status_display }}
+            </span>
+          </td>
+          <td class="px-6 py-3.5 text-gray-400 text-xs">{{ order.created_at|date:"d M Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+            <svg class="w-10 h-10 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            No orders yet
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

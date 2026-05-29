@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% block title %}Shopping Cart - Aparra{% endblock %}
+
+{% block content %}
+<div class="bg-secondary/30 relative min-h-screen">
+  <!-- Decorative background elements -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute top-32 left-4 md:left-16 text-4xl opacity-10" style="animation:bounce 3s infinite">🛍️</div>
+    <div class="absolute top-40 right-4 md:right-24 text-4xl opacity-10" style="animation:bounce 4s infinite 0.5s">✨</div>
+    <div class="absolute bottom-32 left-1/3 text-4xl opacity-10" style="animation:bounce 3.5s infinite 1s">💝</div>
+  </div>
+
+  <div class="container mx-auto max-w-7xl px-4 py-8 md:py-12 relative z-10">
+    {% if cart_items %}
+    <!-- Happy Header -->
+    <div class="text-center mb-8 md:mb-10">
+      <div class="inline-flex items-center gap-2 bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 px-5 py-2.5 rounded-full mb-5" style="animation:pulse 2s infinite">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <span class="text-primary font-medium">Your Shopping Cart</span>
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold font-headline tracking-tight mb-3 bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent">
+        You've Got Great Taste!
+      </h1>
+      <p class="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+        {{ cart_items|length }} item{{ cart_items|length|pluralize }} waiting for you. Let's make them yours! 🎉
+      </p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="flex justify-center mb-8 md:mb-12">
+      <div class="flex items-center gap-3 md:gap-5">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-lg" style="box-shadow:0 0 20px hsl(45,35%,55%,0.4)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          </div>
+          <span class="text-sm font-bold text-primary">Cart</span>
+        </div>
+        <div class="w-12 md:w-20 h-1 bg-gradient-to-r from-primary to-primary/30 rounded-full"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-bold text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span class="text-sm font-medium text-muted-foreground">Checkout</span>
+        </div>
+        <div class="w-12 md:w-20 h-1 bg-gradient-to-r from-primary/30 to-border rounded-full"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-bold text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <span class="text-sm font-medium text-muted-foreground">Confirm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-start">
+      <!-- Cart Items + Trust Badges -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Cart Items -->
+        <div class="space-y-4">
+          {% for item in cart_items %}
+          <div class="flex gap-4 bg-card rounded-xl border border-border p-4 shadow-sm">
+            <a href="{% url 'store:product_detail' item.product.id %}" class="flex-shrink-0">
+              <div class="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-secondary">
+                {% if item.product.media %}
+                <img src="{{ item.product.media.0.url }}" alt="{{ item.product.name }}"
+                     class="w-full h-full object-cover"
+                     onerror="this.src='https://placehold.co/96x96/f5f0e8/b8a98a?text=img'">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                {% endif %}
+              </div>
+            </a>
+            <div class="flex-1 min-w-0">
+              <a href="{% url 'store:product_detail' item.product.id %}"
+                 class="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2 text-sm md:text-base">{{ item.product.name }}</a>
+              {% if item.variant %}<p class="text-xs text-muted-foreground mt-0.5">{{ item.variant }}</p>{% endif %}
+              <p class="text-primary font-bold mt-1">₹{{ item.price|floatformat:0 }}</p>
+              <div class="flex items-center gap-3 mt-2 flex-wrap">
+                <div class="flex items-center border border-border rounded-lg bg-background">
+                  <button onclick="updateItem('{{ item.key }}', {{ item.quantity }} - 1)"
+                          class="px-3 py-1.5 text-muted-foreground hover:text-primary transition-colors text-base leading-none">−</button>
+                  <span class="px-3 text-sm font-semibold min-w-[1.5rem] text-center">{{ item.quantity }}</span>
+                  <button onclick="updateItem('{{ item.key }}', {{ item.quantity }} + 1)"
+                          class="px-3 py-1.5 text-muted-foreground hover:text-primary transition-colors text-base leading-none">+</button>
+                </div>
+                <span class="text-sm font-bold text-foreground">₹{{ item.total|floatformat:0 }}</span>
+              </div>
+            </div>
+            <button onclick="removeItem('{{ item.key }}')"
+                    class="flex-shrink-0 text-muted-foreground hover:text-red-500 transition-colors self-start mt-1 p-1 rounded-lg hover:bg-red-50">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+          <div class="flex items-center gap-3 bg-card px-4 py-3 rounded-xl shadow-sm border border-border">
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold text-xs md:text-sm truncate">Purity Guaranteed</p>
+              <p class="text-xs text-muted-foreground truncate">on every online purchase</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 bg-card px-4 py-3 rounded-xl shadow-sm border border-border">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold text-xs md:text-sm truncate">Secure Delivery</p>
+              <p class="text-xs text-muted-foreground truncate">by our trusted partners</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 bg-card px-4 py-3 rounded-xl shadow-sm border border-border sm:col-span-1">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold text-xs md:text-sm truncate">Easy & Secure Payments</p>
+              <p class="text-xs text-muted-foreground truncate">UPI, Cards, NetBanking</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary Sidebar -->
+      <div class="lg:sticky lg:top-28 space-y-4">
+        <!-- Login prompt for guests -->
+        {% if not user.is_authenticated %}
+        <div class="overflow-hidden border-2 border-primary/20 shadow-md bg-gradient-to-br from-primary/5 via-card to-accent/10 rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+            <div>
+              <a href="{% url 'accounts:login' %}" class="font-bold text-primary hover:underline text-sm flex items-center gap-1">Login / Sign Up</a>
+              <p class="text-xs text-muted-foreground mt-0.5">Unlock Exclusive Rewards</p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Order Summary Card -->
+        <div class="border-2 border-primary/20 shadow-xl bg-gradient-to-br from-primary/5 via-card to-accent/10 rounded-xl overflow-hidden">
+          <div class="p-5 pb-4 border-b border-border/50">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-md flex-shrink-0">
+                <svg class="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              </div>
+              <h2 class="text-lg md:text-xl font-bold">Order Summary</h2>
+            </div>
+          </div>
+
+          <div class="p-5 space-y-4">
+            <!-- Coupon Section (Accordion-style) -->
+            <div class="border border-border rounded-lg overflow-hidden">
+              <button onclick="document.getElementById('coupon-body').classList.toggle('hidden');this.querySelector('.chevron').style.transform=document.getElementById('coupon-body').classList.contains('hidden')?'':'rotate(180deg)'"
+                      class="w-full flex items-center justify-between p-3 text-sm font-semibold hover:bg-secondary/50 transition-colors text-left">
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                  Apply Coupon / Promo Code
+                </span>
+                <svg class="chevron w-4 h-4 text-muted-foreground transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div id="coupon-body" class="hidden p-3 pt-0 border-t border-border">
+                <div id="applied-coupon" class="hidden flex justify-between items-center rounded-lg border-2 border-green-500 bg-green-50 pl-3 pr-2 py-2 mt-3">
+                  <p class="text-sm font-bold text-green-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span id="applied-code-text">CODE APPLIED</span>
+                  </p>
+                  <button onclick="removeDiscount()" class="p-1.5 hover:bg-green-100 rounded-md transition-colors">
+                    <svg class="w-4 h-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div id="coupon-input-section" class="mt-3">
+                  <div class="flex gap-2">
+                    <input type="text" id="discount-code" placeholder="Enter coupon code"
+                           class="flex-1 border-2 border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:border-primary transition-colors uppercase"
+                           oninput="this.value=this.value.toUpperCase()">
+                    <button onclick="applyDiscount()" class="bg-primary text-primary-foreground text-sm px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-semibold">Apply</button>
+                  </div>
+                  <p id="discount-message" class="text-xs mt-1.5 hidden"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="space-y-2.5 text-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-muted-foreground">Sub Total</span>
+                <span class="font-medium" id="subtotal-val">₹{{ subtotal|floatformat:0 }}</span>
+              </div>
+              <div class="flex items-center justify-between hidden" id="discount-row">
+                <span class="text-green-600 flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+                  Product Discount
+                </span>
+                <span class="font-semibold text-green-600" id="discount-val">-₹0</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-muted-foreground">Delivery Charge</span>
+                <span class="font-semibold text-green-600 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                  FREE
+                </span>
+              </div>
+              <div class="border-t border-border pt-3 mt-2">
+                <div class="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-3">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm md:text-base">TOTAL (Incl. of all Taxes)</span>
+                    <span class="font-bold text-xl md:text-2xl text-primary" id="final-total">₹{{ subtotal|floatformat:0 }}</span>
+                  </div>
+                </div>
+              </div>
+              <div id="savings-row" class="hidden flex items-center justify-between text-sm text-green-600 font-bold bg-green-50 rounded-lg p-2.5">
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-width="2"/></svg>
+                  You Save
+                </span>
+                <span id="savings-val">₹0</span>
+              </div>
+            </div>
+
+            <a href="{% url 'store:checkout' %}"
+               class="block w-full text-center bg-gradient-to-r from-primary via-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-bold py-4 rounded-xl shadow-lg transition-all duration-300 text-base">
+              ❤ Proceed to Checkout
+            </a>
+          </div>
+        </div>
+
+        <!-- Happiness Guarantee -->
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-green-800">100% Happiness Guarantee</h3>
+              <p class="text-xs text-green-700 mt-1">Not completely satisfied? We'll make it right. Your happiness is our priority! 💚</p>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'store:shop' %}" class="block text-center text-sm text-muted-foreground hover:text-primary transition-colors">← Continue Shopping</a>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="text-center py-24">
+      <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary flex items-center justify-center">
+        <svg class="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      <h2 class="font-headline text-2xl font-medium mb-2">Your cart is empty</h2>
+      <p class="text-muted-foreground text-sm mb-6">Discover our beautiful collection of jewellery</p>
+      <a href="{% url 'store:shop' %}" class="inline-block bg-primary text-primary-foreground px-8 py-3 rounded-md font-semibold hover:bg-primary/90 transition-colors">Shop Now</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const SUBTOTAL = {{ subtotal }};
+let discountInfo = null;
+
+function removeItem(key) {
+  fetch("{% url 'store:cart_remove' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({key: key})
+  }).then(r => r.json()).then(data => { if (data.success) location.reload(); });
+}
+
+function updateItem(key, qty) {
+  if (qty < 1) { removeItem(key); return; }
+  fetch("{% url 'store:cart_update' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({key: key, quantity: qty})
+  }).then(r => r.json()).then(data => { if (data.success) location.reload(); });
+}
+
+function applyDiscount() {
+  const code = document.getElementById('discount-code').value.trim();
+  if (!code) return;
+  fetch("{% url 'store:apply_discount' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({code: code, subtotal: SUBTOTAL})
+  })
+  .then(r => r.json())
+  .then(data => {
+    const msg = document.getElementById('discount-message');
+    msg.classList.remove('hidden', 'text-red-500', 'text-green-600');
+    if (data.success) {
+      discountInfo = {code: data.discount_code, type: data.discount_type, value: data.discount_value, amount: data.discount_amount};
+      document.getElementById('discount-row').classList.remove('hidden');
+      document.getElementById('discount-val').textContent = '-₹' + data.discount_amount;
+      document.getElementById('final-total').textContent = '₹' + Math.round(SUBTOTAL - data.discount_amount);
+      document.getElementById('savings-row').classList.remove('hidden');
+      document.getElementById('savings-val').textContent = '₹' + data.discount_amount;
+      // Show applied coupon state
+      document.getElementById('coupon-input-section').classList.add('hidden');
+      document.getElementById('applied-coupon').classList.remove('hidden');
+      document.getElementById('applied-coupon').classList.add('flex');
+      document.getElementById('applied-code-text').textContent = 'CODE APPLIED: ' + data.discount_code;
+      msg.classList.add('text-green-600'); msg.textContent = '✓ Discount applied!';
+    } else {
+      discountInfo = null;
+      document.getElementById('discount-row').classList.add('hidden');
+      document.getElementById('final-total').textContent = '₹' + Math.round(SUBTOTAL);
+      document.getElementById('savings-row').classList.add('hidden');
+      msg.classList.add('text-red-500'); msg.textContent = data.error;
+    }
+    msg.classList.remove('hidden');
+  });
+}
+
+function removeDiscount() {
+  discountInfo = null;
+  document.getElementById('discount-row').classList.add('hidden');
+  document.getElementById('final-total').textContent = '₹' + Math.round(SUBTOTAL);
+  document.getElementById('savings-row').classList.add('hidden');
+  document.getElementById('discount-code').value = '';
+  document.getElementById('applied-coupon').classList.add('hidden');
+  document.getElementById('applied-coupon').classList.remove('flex');
+  document.getElementById('coupon-input-section').classList.remove('hidden');
+  document.getElementById('discount-message').classList.add('hidden');
+}
+</script>
+{% endblock %}

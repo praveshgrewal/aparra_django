@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Order Confirmed - Aparra{% endblock %}
+
+{% block content %}
+<div class="bg-secondary/40 min-h-screen py-12 md:py-20">
+  <div class="container max-w-4xl mx-auto px-4">
+    <div class="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border">
+
+      <!-- Header -->
+      <div class="text-center bg-background rounded-t-2xl p-8 md:p-12">
+        <div class="mx-auto w-fit bg-green-100 text-green-700 rounded-full p-3 mb-4">
+          <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <p class="text-sm text-muted-foreground">Order #{{ order.id }}</p>
+        <h1 class="font-headline text-2xl md:text-3xl font-bold mt-2">Thank you for your order, {{ order.customer_name }}!</h1>
+        <p class="text-muted-foreground max-w-xl mx-auto mt-3">
+          Your order has been placed successfully. We'll process it shortly and send you updates.
+        </p>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 md:p-10 space-y-8">
+
+        <!-- Order Items -->
+        <div>
+          <h3 class="font-semibold text-lg mb-4">Order Summary</h3>
+          <ul class="divide-y divide-border border border-border rounded-xl overflow-hidden">
+            {% for item in order.items %}
+            <li class="flex items-center gap-4 p-4">
+              {% if item.product_image %}
+              <div class="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-secondary">
+                <img src="{{ item.product_image }}" alt="{{ item.product_name }}" class="w-full h-full object-cover"
+                     onerror="this.src='https://placehold.co/80x80/f5f0e8/b8a98a?text=img'">
+              </div>
+              {% else %}
+              <div class="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg bg-secondary flex items-center justify-center">
+                <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </div>
+              {% endif %}
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm md:text-base">{{ item.product_name }}</p>
+                {% if item.variant %}<p class="text-xs text-muted-foreground mt-0.5">{{ item.variant }}</p>{% endif %}
+                <p class="text-xs text-muted-foreground mt-1">Qty: {{ item.quantity }}</p>
+              </div>
+              <p class="font-semibold text-sm md:text-base flex-shrink-0">₹{{ item.price|floatformat:0 }}</p>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <hr class="border-border">
+
+        <!-- Shipping + Payment -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Shipping Address -->
+          <div>
+            <h3 class="font-semibold text-lg mb-3">Shipping Address</h3>
+            <div class="text-sm text-muted-foreground space-y-1 bg-secondary/50 rounded-xl p-4 border border-border">
+              <p class="font-medium text-foreground">{{ order.customer_name }}</p>
+              <p>{{ order.shipping_address.address_line1 }}</p>
+              {% if order.shipping_address.address_line2 %}<p>{{ order.shipping_address.address_line2 }}</p>{% endif %}
+              <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} – {{ order.shipping_address.pincode }}</p>
+              <p>{{ order.shipping_address.country|default:"India" }}</p>
+              {% if order.shipping_address.phone %}<p class="mt-2 font-medium text-foreground">📞 {{ order.shipping_address.phone }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- Payment Summary -->
+          <div class="space-y-5">
+            <div>
+              <h3 class="font-semibold text-lg mb-3">Payment Summary</h3>
+              <div class="space-y-2 text-sm bg-secondary/50 rounded-xl p-4 border border-border">
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Subtotal</span>
+                  <span>₹{{ order.subtotal|default:order.total|floatformat:0 }}</span>
+                </div>
+                {% if order.discount_amount %}
+                <div class="flex justify-between text-green-600">
+                  <span>Discount {% if order.discount_code %}({{ order.discount_code }}){% endif %}</span>
+                  <span>-₹{{ order.discount_amount|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Shipping</span>
+                  <span class="text-green-600 font-medium">FREE</span>
+                </div>
+                <hr class="border-border">
+                <div class="flex justify-between font-bold text-base">
+                  <span>Total Paid</span>
+                  <span class="text-primary">₹{{ order.total|floatformat:0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tracking (if available) -->
+            {% if order.shipping_carrier and order.tracking_number %}
+            <div>
+              <h3 class="font-semibold mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                Shipment Tracking
+              </h3>
+              <div class="text-sm text-muted-foreground space-y-1 border border-border rounded-xl p-4">
+                <p><strong>Carrier:</strong> {{ order.shipping_carrier }}</p>
+                <p><strong>Tracking #:</strong> {{ order.tracking_number }}</p>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-6 md:p-10 pt-0">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="{% url 'store:shop' %}"
+             class="flex-1 bg-primary text-primary-foreground text-center font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors">
+            Continue Shopping
+          </a>
+          {% if user.is_authenticated %}
+          <a href="{% url 'accounts:orders' %}"
+             class="flex-1 border border-border text-foreground text-center font-semibold py-3 rounded-xl hover:bg-secondary transition-colors">
+            View My Orders
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

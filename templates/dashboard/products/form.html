@@ -1,0 +1,649 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{% if product %}Edit{% else %}New{% endif %} Product - Aparra Admin{% endblock %}
+{% block page_title %}{% if product %}Edit Product: {{ product.name }}{% else %}New Product{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" id="product-form">
+  {% csrf_token %}
+
+  <!-- Tab Navigation -->
+  <div class="flex gap-1 mb-5 bg-white border border-gray-200 rounded-xl p-1.5 w-fit shadow-sm">
+    <button type="button" onclick="showTab('general')" id="tab-general" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition-all">General</button>
+    <button type="button" onclick="showTab('organization')" id="tab-organization" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">Organization</button>
+    <button type="button" onclick="showTab('pricing')" id="tab-pricing" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">Variants & Pricing</button>
+    <button type="button" onclick="showTab('media')" id="tab-media" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">Media</button>
+    <button type="button" onclick="showTab('seo')" id="tab-seo" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">SEO</button>
+    <button type="button" onclick="showTab('reviews')" id="tab-reviews" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">Reviews</button>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- Left: Tab Content -->
+    <div class="xl:col-span-2 space-y-5">
+
+      <!-- ===== GENERAL TAB ===== -->
+      <div id="pane-general" class="tab-pane space-y-5">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Product Information</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Product Name *</label>
+              <input type="text" name="name" value="{{ product.name|default:'' }}" required placeholder="e.g. 22K Gold Mangalsutra"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Short Description / Subtitle</label>
+              <input type="text" name="seo_title" value="{{ product.seo_title|default:'' }}" placeholder="Brief subtitle shown on product card"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
+              <textarea name="description" rows="5" placeholder="Full product description..."
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition-colors resize-none">{{ product.description|default:'' }}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5">Availability</label>
+                <select name="availability" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                  <option value="in_stock" {% if product.availability == 'in_stock' %}selected{% endif %}>In Stock</option>
+                  <option value="out_of_stock" {% if product.availability == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                  <option value="made_to_order" {% if product.availability == 'made_to_order' %}selected{% endif %}>Made to Order</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5">Discount %</label>
+                <input type="number" name="discount_percentage" step="0.01" min="0" max="100" value="{{ product.discount_percentage|default:'' }}" placeholder="0"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Flags -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Product Attributes</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+              <input type="checkbox" name="is_active" {% if product.is_active|default:True %}checked{% endif %} class="w-4 h-4 rounded accent-amber-600">
+              <div><p class="text-sm font-medium text-gray-700">Active</p><p class="text-xs text-gray-400">Visible on store</p></div>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+              <input type="checkbox" name="has_diamonds" {% if product.has_diamonds %}checked{% endif %} class="w-4 h-4 rounded accent-amber-600">
+              <div><p class="text-sm font-medium text-gray-700">Has Diamonds</p><p class="text-xs text-gray-400">Show diamond tab</p></div>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+              <input type="checkbox" name="has_ring_size" {% if product.has_ring_size %}checked{% endif %} class="w-4 h-4 rounded accent-amber-600">
+              <div><p class="text-sm font-medium text-gray-700">Has Ring Size</p><p class="text-xs text-gray-400">Show size selector</p></div>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+              <input type="checkbox" name="has_stones" {% if product.has_stones %}checked{% endif %} class="w-4 h-4 rounded accent-amber-600">
+              <div><p class="text-sm font-medium text-gray-700">Has Stones</p><p class="text-xs text-gray-400">Show stones section</p></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ORGANIZATION TAB ===== -->
+      <div id="pane-organization" class="tab-pane hidden space-y-5">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Categories</h2>
+          <p class="text-xs text-gray-400 mb-3">Select one or more categories for this product</p>
+          <div class="grid grid-cols-2 gap-2">
+            {% for cat in categories %}
+            <label class="flex items-center gap-2.5 cursor-pointer p-2.5 rounded-lg hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-all">
+              <input type="checkbox" name="category_ids" value="{{ cat.id }}"
+                     {% if product and cat in product.categories.all %}checked{% endif %}
+                     class="w-4 h-4 rounded accent-amber-600">
+              <span class="text-sm text-gray-700">{{ cat.name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Additional Product Info</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">More Info / Details (HTML allowed)</label>
+              <textarea name="more_info" rows="5" placeholder="Extra details shown in More Info tab on product page..."
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 resize-none">{{ product.more_info|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VARIANTS & PRICING TAB ===== -->
+      <div id="pane-pricing" class="tab-pane hidden space-y-5">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Metal & Weight</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Metal *</label>
+              <select name="metal_id" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                <option value="">Select Metal</option>
+                {% for metal in metals %}
+                <option value="{{ metal.id }}" {% if product.metal_id == metal.id %}selected{% endif %}>{{ metal.name }} — ₹{{ metal.price_per_gram }}/g</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Purity *</label>
+              <select name="purity_id" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                <option value="">Select Purity</option>
+                {% for purity in purities %}
+                <option value="{{ purity.id }}" {% if product.purity_id == purity.id %}selected{% endif %}>{{ purity.label }} — {{ purity.metal.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Gross Weight (g)</label>
+              <input type="number" name="gross_weight" step="0.01" min="0" value="{{ product.gross_weight|default:0 }}"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Net Weight (g)</label>
+              <input type="number" name="net_weight" step="0.01" min="0" value="{{ product.net_weight|default:0 }}"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Making Charge & Pricing</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Making Charge Type</label>
+              <select name="making_charge_type" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                <option value="percentage" {% if product.making_charge_type == 'percentage' %}selected{% endif %}>Percentage of Metal Value (%)</option>
+                <option value="fixed" {% if product.making_charge_type == 'fixed' %}selected{% endif %}>Fixed Amount (₹)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Making Charge Value</label>
+              <input type="number" name="making_charge_value" step="0.01" min="0" value="{{ product.making_charge_value|default:0 }}"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Tax Class</label>
+              <select name="tax_class_id" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+                <option value="">No Tax</option>
+                {% for tc in tax_classes %}
+                <option value="{{ tc.id }}" {% if product.tax_class_id == tc.id %}selected{% endif %}>{{ tc.name }} ({{ tc.rate_value }}%)</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Manual Price (₹) — overrides auto</label>
+              <input type="number" name="manual_price" step="0.01" value="{{ product.manual_price|default:'' }}" placeholder="Leave blank for auto"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+          </div>
+          <label class="flex items-center gap-2.5 cursor-pointer mt-4">
+            <input type="checkbox" name="auto_price_enabled" {% if product.auto_price_enabled|default:True %}checked{% endif %} class="w-4 h-4 rounded accent-amber-600">
+            <span class="text-sm text-gray-700">Auto-calculate price from metal + making charge + tax</span>
+          </label>
+          {% if product and product.display_price %}
+          <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <p class="text-xs text-amber-700 font-semibold">Current Calculated Price</p>
+            <p class="text-xl font-bold text-amber-800 mt-1">₹{{ product.display_price|floatformat:0 }}</p>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Diamond Details -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Diamond Details (JSON)</h2>
+          <p class="text-xs text-gray-400 mb-3">Array of diamond specs. Example: <code class="bg-gray-100 px-1 rounded">[{"shape":"Round","weight":0.5,"pieces":10,"clarity":"VS","color":"G","rate_per_carat":15000}]</code></p>
+          <textarea name="diamond_details_json" rows="5"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 resize-none">{% if product.diamond_details %}{{ product.diamond_details|safe }}{% endif %}</textarea>
+        </div>
+      </div>
+
+      <!-- ===== MEDIA TAB ===== -->
+      <div id="pane-media" class="tab-pane hidden space-y-5">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-semibold text-gray-800">Product Images</h2>
+              <p class="text-xs text-gray-400 mt-0.5">First image is the primary. Drag to reorder.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="openMediaPicker()"
+                      class="flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 text-xs font-medium px-3 py-2 rounded-lg transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Pick from Media
+              </button>
+              <label class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg cursor-pointer transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                Upload Image
+                <input type="file" id="media-upload-input" accept="image/*" multiple class="hidden" onchange="uploadProductImages(this)">
+              </label>
+            </div>
+          </div>
+
+          <!-- Image Grid -->
+          <div id="media-image-grid" class="grid grid-cols-4 gap-3 mb-4 min-h-[80px]">
+            <!-- populated by JS -->
+          </div>
+
+          <!-- Drag-and-drop upload zone -->
+          <div id="media-drop-zone"
+               class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center transition-colors hover:border-amber-400 cursor-pointer"
+               onclick="document.getElementById('media-upload-input').click()"
+               ondragover="event.preventDefault();this.classList.add('border-amber-400','bg-amber-50')"
+               ondragleave="this.classList.remove('border-amber-400','bg-amber-50')"
+               ondrop="handleMediaDrop(event)">
+            <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <p class="text-xs text-gray-400">Drop images here or <span class="text-amber-600 font-medium">click to upload</span></p>
+          </div>
+
+          <!-- URL paste row -->
+          <div class="flex gap-2 mt-3">
+            <input type="text" id="media-url-input" placeholder="Or paste an image URL and press Add"
+                   class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();addImageUrl();}">
+            <button type="button" onclick="addImageUrl()"
+                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">Add</button>
+          </div>
+
+          <!-- Hidden input synced to grid -->
+          <input type="hidden" name="media_json" id="media-json-hidden">
+
+          <!-- Upload progress -->
+          <div id="upload-progress" class="hidden mt-3">
+            <div class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Uploading...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== MEDIA PICKER MODAL ===== -->
+      <div id="media-picker-modal" class="fixed inset-0 z-[1000] hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" onclick="closeMediaPicker()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 max-h-[85vh] flex flex-col">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+            <h3 class="font-semibold text-gray-800">Media Library</h3>
+            <div class="flex items-center gap-3">
+              <label class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg cursor-pointer transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Upload New
+                <input type="file" accept="image/*" multiple class="hidden" onchange="uploadToLibrary(this)">
+              </label>
+              <button type="button" onclick="closeMediaPicker()" class="text-gray-400 hover:text-gray-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- Search -->
+          <div class="px-6 py-3 border-b border-gray-100 flex-shrink-0">
+            <input type="text" id="media-search" placeholder="Search files..." oninput="filterMediaFiles(this.value)"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+          <!-- Grid -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <div id="media-library-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
+              <div class="col-span-full text-center text-gray-400 py-8 text-sm">Loading...</div>
+            </div>
+          </div>
+          <!-- Footer -->
+          <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0 flex items-center justify-between">
+            <p class="text-xs text-gray-400" id="media-selected-count">Click images to add them to the product</p>
+            <button type="button" onclick="closeMediaPicker()"
+                    class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEO TAB ===== -->
+      <div id="pane-seo" class="tab-pane hidden space-y-5">
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-4">Search Engine Optimization</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Meta Title</label>
+              <input type="text" name="meta_title" value="{{ product.meta_title|default:'' }}" placeholder="SEO page title (60 chars max)"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Meta Description</label>
+              <textarea name="meta_description" rows="3" placeholder="Brief description for search engines (160 chars max)"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 resize-none">{{ product.meta_description|default:'' }}</textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">URL Slug (auto-generated if blank)</label>
+              <input type="text" name="slug" value="{{ product.slug|default:'' }}" placeholder="e.g. 22k-gold-mangalsutra"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+            </div>
+          </div>
+          <!-- Google preview -->
+          <div class="mt-5 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <p class="text-xs font-semibold text-gray-500 mb-3">Google Search Preview</p>
+            {% if product %}
+            <p class="text-blue-600 text-sm font-medium">{{ product.meta_title|default:product.name }}</p>
+            <p class="text-green-700 text-xs mt-0.5">aparra.com › products › {{ product.slug|default:"product-slug" }}</p>
+            <p class="text-gray-600 text-xs mt-1">{{ product.meta_description|default:"Product description will appear here..." }}</p>
+            {% else %}
+            <p class="text-blue-600 text-sm font-medium">Product Title</p>
+            <p class="text-green-700 text-xs mt-0.5">aparra.com › products › product-slug</p>
+            <p class="text-gray-600 text-xs mt-1">Product description will appear here...</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== REVIEWS TAB ===== -->
+      <div id="pane-reviews" class="tab-pane hidden">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800">Customer Reviews</h2>
+            {% if product %}
+            <span class="text-xs text-gray-400">{{ product.reviews.count }} review{{ product.reviews.count|pluralize }}</span>
+            {% endif %}
+          </div>
+          {% if product %}
+          {% for review in product.reviews.all %}
+          <div class="px-6 py-4 border-b border-gray-100 last:border-0">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm font-semibold text-gray-800">{{ review.reviewer_name }}</p>
+                <div class="flex items-center gap-0.5 mt-0.5">
+                  {% for i in "12345" %}
+                  <svg class="w-3.5 h-3.5 {% if forloop.counter <= review.rating %}text-amber-400{% else %}text-gray-200{% endif %}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                  {% endfor %}
+                </div>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if review.status == 'approved' %}bg-green-100 text-green-700{% elif review.status == 'rejected' %}bg-red-100 text-red-600{% else %}bg-amber-100 text-amber-700{% endif %}">{{ review.status }}</span>
+            </div>
+            <p class="text-sm text-gray-600 mt-2">{{ review.comment }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ review.created_at|date:"d M Y" }}</p>
+          </div>
+          {% empty %}
+          <div class="px-6 py-12 text-center text-gray-400">
+            <svg class="w-10 h-10 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            No reviews yet
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="px-6 py-8 text-center text-gray-400 text-sm">Save the product first to see reviews.</div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div><!-- /left col -->
+
+    <!-- Right Sidebar -->
+    <div class="space-y-5">
+
+      <!-- Save / Actions -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 rounded-lg transition-colors text-sm mb-3">
+          {% if product %}Save Changes{% else %}Create Product{% endif %}
+        </button>
+        {% if product %}
+        <a href="{% url 'store:product_detail' product.id %}" target="_blank" class="flex items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-amber-600 transition-colors mb-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          View on store
+        </a>
+        {% endif %}
+        <a href="{% url 'dashboard:product_list' %}" class="block text-center text-sm text-gray-400 hover:text-gray-600">← Back to products</a>
+      </div>
+
+      <!-- Product Status card -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <h3 class="font-semibold text-gray-800 mb-3 text-sm">Status</h3>
+        <div class="space-y-2">
+          {% if product %}
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gray-500">Visibility</span>
+            <span class="font-medium {% if product.is_active %}text-green-600{% else %}text-red-500{% endif %}">{% if product.is_active %}Active{% else %}Hidden{% endif %}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gray-500">Availability</span>
+            <span class="font-medium text-gray-700">{{ product.get_availability_display }}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gray-500">Price</span>
+            <span class="font-semibold text-amber-600">₹{{ product.display_price|floatformat:0|default:"—" }}</span>
+          </div>
+          {% else %}
+          <p class="text-xs text-gray-400">Product not saved yet</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Product Preview -->
+      {% if product and product.get_primary_image %}
+      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <h3 class="font-semibold text-gray-800 mb-3 text-sm">Primary Image</h3>
+        <div class="aspect-square rounded-lg overflow-hidden bg-gray-100">
+          <img src="{{ product.get_primary_image }}" alt="{{ product.name }}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full text-gray-300\'><svg class=\'w-10 h-10\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'/></svg></div>'">
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /right sidebar -->
+
+  </div><!-- /grid -->
+</form>
+
+<style>
+  .tab-btn { color: #6b7280; }
+  .tab-btn:hover { color: #374151; background: #f9fafb; }
+  .tab-btn.active { background: #92400e; color: white; }
+  .media-thumb.selected { ring: 2px; outline: 3px solid #d97706; }
+  #media-image-grid .img-card { cursor: grab; }
+  #media-image-grid .img-card.dragging { opacity: 0.4; }
+</style>
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.remove('hidden');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── Media state ────────────────────────────────────────────────────────
+const UPLOAD_URL = '{% url "dashboard:media_upload" %}';
+const LIST_URL   = '{% url "dashboard:media_list_json" %}';
+const CSRF       = '{{ csrf_token }}';
+
+let mediaImages = {% if product and product.media %}{{ product.media|safe }}{% else %}[]{% endif %};
+
+function syncHidden() {
+  document.getElementById('media-json-hidden').value = JSON.stringify(mediaImages);
+}
+
+function renderGrid() {
+  const grid = document.getElementById('media-image-grid');
+  grid.innerHTML = '';
+  if (!mediaImages.length) {
+    grid.innerHTML = '<div class="col-span-4 text-center text-gray-300 py-6 text-sm">No images yet</div>';
+    syncHidden();
+    return;
+  }
+  mediaImages.forEach((img, i) => {
+    const card = document.createElement('div');
+    card.className = 'img-card relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 cursor-grab';
+    card.draggable = true;
+    card.dataset.index = i;
+    card.innerHTML = `
+      <img src="${img.url}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200x200/f3f0e8/b8860b?text=?'">
+      ${i === 0 ? '<span class="absolute top-1.5 left-1.5 bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">Primary</span>' : ''}
+      <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+        ${i > 0 ? `<button type="button" onclick="moveImage(${i},-1)" title="Move left" class="bg-white/90 hover:bg-white text-gray-800 rounded p-1.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>` : ''}
+        <button type="button" onclick="removeImage(${i})" title="Remove" class="bg-red-500 hover:bg-red-600 text-white rounded p-1.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        ${i < mediaImages.length - 1 ? `<button type="button" onclick="moveImage(${i},1)" title="Move right" class="bg-white/90 hover:bg-white text-gray-800 rounded p-1.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>` : ''}
+      </div>`;
+
+    // Drag-to-reorder
+    card.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', i); card.classList.add('dragging'); });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('dragover', e => e.preventDefault());
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      const to = parseInt(card.dataset.index);
+      if (from !== to) { const [item] = mediaImages.splice(from, 1); mediaImages.splice(to, 0, item); renderGrid(); }
+    });
+
+    grid.appendChild(card);
+  });
+  syncHidden();
+
+  // Update sidebar preview
+  const sidebarImg = document.querySelector('[alt="{{ product.name }}"]');
+  if (sidebarImg && mediaImages[0]) sidebarImg.src = mediaImages[0].url;
+}
+
+function removeImage(i) { mediaImages.splice(i, 1); renderGrid(); }
+function moveImage(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= mediaImages.length) return;
+  [mediaImages[i], mediaImages[j]] = [mediaImages[j], mediaImages[i]];
+  renderGrid();
+}
+
+function addImageUrl() {
+  const inp = document.getElementById('media-url-input');
+  const url = inp.value.trim();
+  if (!url) return;
+  mediaImages.push({ url });
+  renderGrid();
+  inp.value = '';
+}
+
+// ── Upload to server ───────────────────────────────────────────────────
+function uploadProductImages(input) { doUpload(input.files); }
+function handleMediaDrop(e) {
+  e.preventDefault();
+  document.getElementById('media-drop-zone').classList.remove('border-amber-400','bg-amber-50');
+  doUpload(e.dataTransfer.files);
+}
+
+function doUpload(files) {
+  if (!files || !files.length) return;
+  const prog = document.getElementById('upload-progress');
+  prog.classList.remove('hidden');
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+  fetch(UPLOAD_URL, { method:'POST', headers:{'X-CSRFToken': CSRF}, body: fd })
+    .then(r => r.json())
+    .then(d => {
+      prog.classList.add('hidden');
+      if (d.success) {
+        d.files.forEach(f => mediaImages.push({ url: f.url, type: 'image' }));
+        renderGrid();
+      }
+    })
+    .catch(() => prog.classList.add('hidden'));
+}
+
+// ── Media picker ───────────────────────────────────────────────────────
+let allLibraryFiles = [];
+
+function openMediaPicker() {
+  const modal = document.getElementById('media-picker-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  loadLibrary();
+}
+function closeMediaPicker() {
+  const modal = document.getElementById('media-picker-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function loadLibrary() {
+  fetch(LIST_URL, { headers:{'X-CSRFToken': CSRF} })
+    .then(r => r.json())
+    .then(d => { allLibraryFiles = d.files || []; renderLibrary(allLibraryFiles); })
+    .catch(() => {
+      document.getElementById('media-library-grid').innerHTML =
+        '<div class="col-span-full text-center text-red-400 py-8 text-sm">Failed to load media library.</div>';
+    });
+}
+
+function renderLibrary(files) {
+  const grid = document.getElementById('media-library-grid');
+  if (!files.length) {
+    grid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-8 text-sm">No images in library. Upload some first.</div>';
+    return;
+  }
+  const currentUrls = new Set(mediaImages.map(m => m.url));
+  grid.innerHTML = files.map(f => `
+    <div class="media-thumb relative group aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all
+      ${currentUrls.has(f.url) ? 'border-amber-500' : 'border-gray-200 hover:border-amber-400'}"
+      onclick="toggleLibraryImage('${f.url}', '${f.name}', this)" title="${f.name}">
+      <img src="${f.url}" class="w-full h-full object-cover" loading="lazy"
+           onerror="this.src='https://placehold.co/200x200/f3f0e8/b8860b?text=?'">
+      ${currentUrls.has(f.url) ? '<div class="absolute top-1 right-1 bg-amber-500 rounded-full p-0.5"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>' : ''}
+      <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] p-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">${f.name}</div>
+    </div>`).join('');
+}
+
+function toggleLibraryImage(url, name, el) {
+  const idx = mediaImages.findIndex(m => m.url === url);
+  if (idx >= 0) {
+    mediaImages.splice(idx, 1);
+    el.classList.remove('border-amber-500');
+    el.classList.add('border-gray-200');
+    el.querySelector('.absolute.top-1')?.remove();
+  } else {
+    mediaImages.push({ url, type: 'image' });
+    el.classList.add('border-amber-500');
+    el.classList.remove('border-gray-200');
+    if (!el.querySelector('.absolute.top-1')) {
+      el.insertAdjacentHTML('beforeend', '<div class="absolute top-1 right-1 bg-amber-500 rounded-full p-0.5"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>');
+    }
+  }
+  renderGrid();
+  const count = mediaImages.length;
+  document.getElementById('media-selected-count').textContent = count
+    ? `${count} image${count > 1 ? 's' : ''} selected for this product`
+    : 'Click images to add them to the product';
+}
+
+function filterMediaFiles(q) {
+  const filtered = q ? allLibraryFiles.filter(f => f.name.toLowerCase().includes(q.toLowerCase())) : allLibraryFiles;
+  renderLibrary(filtered);
+}
+
+function uploadToLibrary(input) {
+  doUploadToLibrary(input.files);
+}
+function doUploadToLibrary(files) {
+  if (!files || !files.length) return;
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+  fetch(UPLOAD_URL, { method:'POST', headers:{'X-CSRFToken': CSRF}, body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        d.files.forEach(f => {
+          mediaImages.push({ url: f.url, type: 'image' });
+          allLibraryFiles.unshift(f);
+        });
+        renderGrid();
+        renderLibrary(allLibraryFiles);
+      }
+    });
+}
+
+// Ensure media_json is always submitted with the form
+document.getElementById('product-form').addEventListener('submit', syncHidden);
+
+// Init on page load
+renderGrid();
+</script>
+{% endblock %}

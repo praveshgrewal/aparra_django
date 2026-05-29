@@ -1,0 +1,114 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Reports - Admin{% endblock %}
+{% block page_title %}Sales Reports{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Period selector -->
+<div class="flex items-center gap-3 mb-6">
+  {% for p, label in period_choices %}
+  <a href="?period={{ p }}" class="px-4 py-2 rounded-lg text-sm font-medium border transition-colors
+    {% if period == p %}bg-amber-600 text-white border-amber-600{% else %}bg-white text-gray-600 border-gray-200 hover:border-amber-400{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Summary cards -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Total Revenue</p>
+    <p class="text-2xl font-bold text-gray-900">₹{{ total_revenue|floatformat:0 }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Total Orders</p>
+    <p class="text-2xl font-bold text-gray-900">{{ total_orders }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Avg. Order Value</p>
+    <p class="text-2xl font-bold text-gray-900">₹{{ avg_order|floatformat:0 }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Pending</p>
+    <p class="text-2xl font-bold text-amber-600">{{ status_data.pending|default:0 }}</p>
+  </div>
+</div>
+
+<!-- Revenue chart -->
+<div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+  <h2 class="font-semibold text-gray-800 mb-4">Revenue Over Time</h2>
+  <canvas id="revenueChart" height="80"></canvas>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <!-- Order status breakdown -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+    <h2 class="font-semibold text-gray-800 mb-4">Orders by Status</h2>
+    <div class="space-y-3">
+      {% for status, count in status_data.items %}
+      <div class="flex items-center justify-between">
+        <span class="text-sm capitalize text-gray-600">{{ status }}</span>
+        <div class="flex items-center gap-3">
+          <div class="w-32 bg-gray-100 rounded-full h-2">
+            <div class="h-2 rounded-full bg-amber-500" style="width:{% widthratio count total_orders 100 %}%"></div>
+          </div>
+          <span class="text-sm font-semibold text-gray-800 w-6 text-right">{{ count }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-gray-400 text-sm">No orders yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Top products -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+    <h2 class="font-semibold text-gray-800 mb-4">Top Products (by Revenue)</h2>
+    <div class="space-y-3">
+      {% for p in top_products %}
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-700 truncate max-w-[200px]">{{ p.name }}</span>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <span class="text-xs text-gray-400">×{{ p.qty }}</span>
+          <span class="text-sm font-semibold text-gray-800">₹{{ p.revenue|floatformat:0 }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-gray-400 text-sm">No sales data yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{ labels_json|safe }},
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: {{ revenues_json|safe }},
+      borderColor: '#d97706',
+      backgroundColor: 'rgba(217,119,6,0.08)',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: '#d97706',
+      tension: 0.3,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 11 } } },
+      y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 11 }, callback: v => '₹' + v.toLocaleString() } }
+    }
+  }
+});
+</script>
+{% endblock %}

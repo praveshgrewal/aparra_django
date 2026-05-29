@@ -1,0 +1,32 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Homepage Content - Admin{% endblock %}
+{% block page_title %}Homepage Content{% endblock %}
+{% block content %}
+<div class="max-w-3xl">
+  <p class="text-sm text-gray-500 mb-6">Edit the JSON content for the homepage. Changes are saved immediately.</p>
+  <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+    <textarea id="content-editor" rows="24" class="w-full font-mono text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-gold resize-none">{{ content|safe }}</textarea>
+    <div class="flex gap-3 mt-4">
+      <button onclick="saveContent()" class="bg-gold text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-gold-dark">Save Content</button>
+      <a href="{% url 'store:homepage' %}" target="_blank" class="border border-gray-200 text-gray-600 px-6 py-2.5 rounded-xl text-sm hover:border-gold">Preview →</a>
+    </div>
+    <p id="save-status" class="text-sm mt-3 hidden"></p>
+  </div>
+</div>
+<script>
+function saveContent() {
+  const text = document.getElementById('content-editor').value;
+  let data;
+  try { data = JSON.parse(text); } catch (e) { document.getElementById('save-status').textContent = 'Invalid JSON: ' + e.message; document.getElementById('save-status').className = 'text-sm mt-3 text-red-500'; document.getElementById('save-status').classList.remove('hidden'); return; }
+  fetch("{% url 'dashboard:homepage_content_save' %}", {
+    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+    body: JSON.stringify(data)
+  }).then(r => r.json()).then(d => {
+    const s = document.getElementById('save-status');
+    s.classList.remove('hidden');
+    if (d.success) { s.textContent = '✓ Saved successfully'; s.className = 'text-sm mt-3 text-green-600'; }
+    else { s.textContent = 'Error saving'; s.className = 'text-sm mt-3 text-red-500'; }
+  });
+}
+</script>
+{% endblock %}

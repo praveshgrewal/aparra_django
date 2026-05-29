@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ category.name }} - Aparra{% endblock %}
+{% block content %}
+<section class="relative h-48 bg-gray-800 text-white flex items-center justify-center overflow-hidden">
+  {% if category.image_url %}<img src="{{ category.image_url }}" alt="{{ category.name }}" class="absolute inset-0 w-full h-full object-cover opacity-30">{% endif %}
+  <div class="relative z-10 text-center">
+    <h1 class="font-headline text-4xl font-bold">{{ category.name }}</h1>
+    {% if category.description %}<p class="text-white/70 mt-2">{{ category.description }}</p>{% endif %}
+  </div>
+</section>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <p class="text-sm text-gray-500 mb-6">{{ products|length }} product{{ products|length|pluralize }}</p>
+  {% if products %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {% for product in products %}{% include 'partials/product_card.html' %}{% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-20 text-gray-400">No products in this category yet.</div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function addToCart(productId, price) {
+  fetch("{% url 'store:cart_add' %}", {
+    method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({product_id: productId, quantity: 1, price: price})
+  }).then(r => r.json()).then(data => {
+    if (data.success) { document.getElementById('cart-badge').textContent = data.cart_count; document.getElementById('cart-badge').classList.remove('hidden'); showToast('Added to cart!'); }
+  });
+}
+</script>
+{% endblock %}

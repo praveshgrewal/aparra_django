@@ -1,0 +1,20 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}New Discount - Admin{% endblock %}
+{% block page_title %}New Discount Code{% endblock %}
+{% block content %}
+<div class="max-w-lg">
+  <form method="post" class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
+    {% csrf_token %}
+    <div><label class="text-xs font-semibold text-gray-500 block mb-1">Code *</label><input type="text" name="code" required placeholder="e.g. SAVE10" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-1 focus:ring-gold"></div>
+    <div><label class="text-xs font-semibold text-gray-500 block mb-1">Type</label><select name="type" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold"><option value="percentage">Percentage</option><option value="fixed_amount">Fixed Amount</option></select></div>
+    <div><label class="text-xs font-semibold text-gray-500 block mb-1">Value *</label><input type="number" name="value" required step="0.01" placeholder="10 (for 10% or ₹10)" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold"></div>
+    <div><label class="text-xs font-semibold text-gray-500 block mb-1">Minimum Purchase (₹)</label><input type="number" name="min_purchase" value="0" step="0.01" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold"></div>
+    <div><label class="text-xs font-semibold text-gray-500 block mb-1">Usage Limit (blank = unlimited)</label><input type="number" name="usage_limit" placeholder="Leave blank for unlimited" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold"></div>
+    <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" name="is_active" checked class="rounded text-gold"> Active</label>
+    <div class="flex gap-3">
+      <button type="submit" class="bg-gold text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-gold-dark">Create</button>
+      <a href="{% url 'dashboard:discount_list' %}" class="border border-gray-200 text-gray-600 px-6 py-2 rounded-lg text-sm">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

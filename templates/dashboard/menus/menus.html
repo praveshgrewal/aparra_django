@@ -1,0 +1,113 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Menus - Admin{% endblock %}
+{% block page_title %}Navigation Menus{% endblock %}
+
+{% block content %}
+<div class="flex gap-6">
+
+  <!-- Left: menu list -->
+  <div class="w-56 flex-shrink-0 space-y-2">
+    {% for menu in menus %}
+    <a href="?menu={{ menu.id }}"
+       class="flex items-center justify-between px-4 py-2.5 rounded-xl text-sm border transition-colors
+              {% if selected and selected.id == menu.id %}bg-amber-50 border-amber-300 text-amber-800 font-semibold{% else %}bg-white border-gray-200 text-gray-700 hover:border-amber-300{% endif %}">
+      {{ menu.name }}
+    </a>
+    {% empty %}
+    <p class="text-xs text-gray-400 px-1">No menus yet.</p>
+    {% endfor %}
+
+    <!-- Create new -->
+    <form method="post" action="{% url 'dashboard:menus_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <div class="flex gap-2 mt-3">
+        <input type="text" name="name" placeholder="Menu name" required
+               class="flex-1 min-w-0 border border-gray-200 rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400">
+        <button type="submit" class="bg-amber-600 text-white rounded-lg px-3 py-2 text-xs font-semibold hover:bg-amber-700 transition-colors">+</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right: menu editor -->
+  <div class="flex-1">
+    {% if selected %}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800">Editing: {{ selected.name }}</h2>
+        <form method="post" action="{% url 'dashboard:menus_save' %}" onsubmit="return confirm('Delete this menu?')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="menu_id" value="{{ selected.id }}">
+          <button type="submit" class="text-xs text-red-500 hover:text-red-600">Delete menu</button>
+        </form>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-gray-500">Add items below. Each item has a label and URL. Drag to reorder.</p>
+
+        <div id="menu-items" class="space-y-2">
+          {% for item in selected.items %}
+          <div class="menu-item flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+            <span class="cursor-move text-gray-300">⠿</span>
+            <input type="text" value="{{ item.label }}" placeholder="Label"
+                   class="flex-1 bg-transparent border-0 text-sm focus:outline-none font-medium" data-field="label">
+            <input type="text" value="{{ item.href }}" placeholder="/url"
+                   class="flex-1 bg-transparent border-0 text-sm focus:outline-none text-gray-500 font-mono" data-field="href">
+            <button type="button" onclick="this.closest('.menu-item').remove()" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+
+        <button type="button" onclick="addItem()"
+                class="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Item
+        </button>
+
+        <form method="post" action="{% url 'dashboard:menus_save' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="menu_id" value="{{ selected.id }}">
+          <input type="hidden" name="name" value="{{ selected.name }}">
+          <input type="hidden" name="items_json" id="items-json">
+          <button type="submit" onclick="serializeItems(event)"
+                  class="mt-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors text-sm">
+            Save Menu
+          </button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 shadow-sm">
+      <svg class="w-12 h-12 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      Select or create a menu to edit
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function addItem() {
+  const div = document.createElement('div');
+  div.className = 'menu-item flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5';
+  div.innerHTML = `
+    <span class="cursor-move text-gray-300">⠿</span>
+    <input type="text" placeholder="Label" class="flex-1 bg-transparent border-0 text-sm focus:outline-none font-medium" data-field="label">
+    <input type="text" placeholder="/url" class="flex-1 bg-transparent border-0 text-sm focus:outline-none text-gray-500 font-mono" data-field="href">
+    <button type="button" onclick="this.closest('.menu-item').remove()" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
+  `;
+  document.getElementById('menu-items').appendChild(div);
+}
+
+function serializeItems(e) {
+  const items = [];
+  document.querySelectorAll('.menu-item').forEach(row => {
+    const label = row.querySelector('[data-field="label"]').value.trim();
+    const href = row.querySelector('[data-field="href"]').value.trim();
+    if (label) items.push({ label, href });
+  });
+  document.getElementById('items-json').value = JSON.stringify(items);
+}
+</script>
+{% endblock %}

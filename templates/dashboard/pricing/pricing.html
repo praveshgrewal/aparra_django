@@ -1,0 +1,406 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Pricing Management - Admin{% endblock %}
+{% block page_title %}Pricing Management{% endblock %}
+
+{% block content %}
+
+<!-- ===== METAL PRICING ===== -->
+<form method="post" action="{% url 'dashboard:pricing_save_metals' %}">
+  {% csrf_token %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold text-gray-800">Metal Pricing</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Set base metal price per gram. Purity prices are calculated automatically.</p>
+      </div>
+      <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+        Save All Prices
+      </button>
+    </div>
+
+    <div class="divide-y divide-gray-100">
+      {% for item in metals_with_purities %}
+      {% with metal=item.metal purities=item.purities %}
+      <div class="p-6 {% if not metal.is_active %}opacity-60{% endif %}">
+
+        <!-- Metal header row -->
+        <div class="flex items-center gap-4 mb-4">
+          <h3 class="font-semibold text-gray-800 text-base w-28">{{ metal.name }}</h3>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">₹/gram</span>
+            <input type="number" name="price_{{ metal.id }}" value="{{ metal.price_per_gram }}"
+                   step="0.01" min="0" placeholder="0.00"
+                   class="w-36 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
+                   {% if not metal.is_active %}disabled{% endif %}>
+          </div>
+
+          <!-- Active toggle -->
+          <label class="flex items-center gap-2 cursor-pointer ml-2">
+            <div class="relative">
+              <input type="checkbox" name="active_{{ metal.id }}" id="active_{{ metal.id }}"
+                     {% if metal.is_active %}checked{% endif %}
+                     class="sr-only peer"
+                     onchange="toggleMetalRow('{{ metal.id }}', this.checked)">
+              <div class="w-10 h-5 bg-gray-200 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+            </div>
+            <span class="text-xs text-gray-500 font-medium" id="active_label_{{ metal.id }}">
+              {% if metal.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </label>
+
+          <!-- Add purity button -->
+          <button type="button"
+                  onclick="openPurityDialog('', '{{ metal.id }}', '{{ metal.name }}', '', '', true)"
+                  class="ml-auto flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Purity
+          </button>
+        </div>
+
+        <!-- Purities table -->
+        {% if purities %}
+        <div class="overflow-x-auto rounded-lg border border-gray-100">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-xs text-gray-500">
+                <th class="px-4 py-2.5 text-left font-semibold">Purity Label</th>
+                <th class="px-4 py-2.5 text-left font-semibold">Fineness</th>
+                <th class="px-4 py-2.5 text-left font-semibold">Status</th>
+                <th class="px-4 py-2.5 text-right font-semibold">Calculated ₹/gram</th>
+                <th class="px-4 py-2.5 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              {% for purity in purities %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-800">{{ purity.label }}</td>
+                <td class="px-4 py-3 text-gray-500 font-mono">{{ purity.fineness|floatformat:3 }} <span class="text-xs text-gray-400">({{ purity.fineness|floatformat:1 }}%)</span></td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if purity.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                    {% if purity.is_active %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right font-mono font-semibold text-amber-700"
+                    data-metal="{{ metal.id }}" data-fineness="{{ purity.fineness }}" data-base="{{ metal.price_per_gram }}">
+                  ₹{{ metal.price_per_gram|floatformat:0 }}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button type="button"
+                          onclick="openPurityDialog('{{ purity.id }}','{{ metal.id }}','{{ metal.name }}','{{ purity.label }}','{{ purity.fineness }}',{{ purity.is_active|yesno:'true,false' }})"
+                          class="text-xs text-gray-500 hover:text-amber-600 font-medium px-2 py-1 rounded hover:bg-amber-50 transition-colors">Edit</button>
+                  <form method="post" action="{% url 'dashboard:purity_save' %}" class="inline" onsubmit="return confirmDelete('purity')">
+                    {% csrf_token %}
+                    <input type="hidden" name="purity_id" value="{{ purity.id }}">
+                    <input type="hidden" name="metal_id" value="{{ metal.id }}">
+                    <input type="hidden" name="label" value="{{ purity.label }}">
+                    <input type="hidden" name="fineness" value="{{ purity.fineness }}">
+                    <input type="hidden" name="_delete" value="1">
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors ml-1">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-400 italic py-2">No purities defined for {{ metal.name }}. Add one above.</p>
+        {% endif %}
+
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="p-12 text-center text-gray-400">No metals found. Add metals in Metals & Purities.</div>
+      {% endfor %}
+    </div>
+  </div>
+</form>
+
+
+<!-- ===== DIAMOND SERIES PRICING ===== -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+  <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+        <h2 class="font-semibold text-gray-800">Diamond Series Pricing</h2>
+      </div>
+      <p class="text-xs text-gray-400 mt-0.5">Create diamond quality tiers (Classic, Premium, Signature) with rates per carat.</p>
+    </div>
+    <button type="button" onclick="openSeriesDialog()"
+            class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add Series
+    </button>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500">
+          <th class="px-6 py-3 text-left font-semibold">Series Name</th>
+          <th class="px-6 py-3 text-left font-semibold">Diamond Type</th>
+          <th class="px-6 py-3 text-left font-semibold">Rate / Carat</th>
+          <th class="px-6 py-3 text-left font-semibold">Quality</th>
+          <th class="px-6 py-3 text-left font-semibold">Description</th>
+          <th class="px-6 py-3 text-left font-semibold">Status</th>
+          <th class="px-6 py-3 text-right font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-50">
+        {% for s in diamond_series %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-3.5 font-semibold text-gray-800">{{ s.name }}</td>
+          <td class="px-6 py-3.5">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600">{{ s.diamond_type }}</span>
+          </td>
+          <td class="px-6 py-3.5 font-mono font-semibold text-amber-700">₹{{ s.rate_per_carat|floatformat:0 }}/ct</td>
+          <td class="px-6 py-3.5 text-xs text-gray-500">
+            {% if s.cut %}{{ s.cut }}{% endif %}
+            {% if s.clarity %} · {{ s.clarity }}{% endif %}
+            {% if s.color %} · {{ s.color }}{% endif %}
+            {% if not s.cut and not s.clarity and not s.color %}—{% endif %}
+          </td>
+          <td class="px-6 py-3.5 text-gray-500 text-sm max-w-xs truncate">{{ s.description|default:"—" }}</td>
+          <td class="px-6 py-3.5">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if s.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+              {% if s.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </td>
+          <td class="px-6 py-3.5 text-right space-x-1">
+            <button type="button"
+                    onclick="openSeriesDialog('{{ s.id }}','{{ s.name|escapejs }}','{{ s.rate_per_carat }}','{{ s.diamond_type }}','{{ s.description|escapejs }}','{{ s.cut|escapejs }}','{{ s.clarity|escapejs }}','{{ s.color|escapejs }}','{{ s.setting_charges|default:'' }}','{{ s.certification_cost|default:'' }}','{{ s.brand_margin|default:'' }}',{{ s.is_active|yesno:'true,false' }})"
+                    class="text-xs text-gray-500 hover:text-amber-600 font-medium px-2 py-1 rounded hover:bg-amber-50 transition-colors">
+              Edit
+            </button>
+            <form method="post" action="{% url 'dashboard:diamond_series_delete' s.id %}" class="inline" onsubmit="return confirmDelete('series')">
+              {% csrf_token %}
+              <button type="submit" class="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-6 py-14 text-center text-gray-400">
+            <svg class="w-10 h-10 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3l14 9-14 9V3z"/></svg>
+            No diamond series defined yet. Click "Add Series" to create one.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ===== PURITY DIALOG ===== -->
+<div id="purity-dialog" class="fixed inset-0 z-50 hidden items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closePurityDialog()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+    <h3 class="font-semibold text-gray-800 mb-5" id="purity-dialog-title">Add Purity</h3>
+    <form method="post" action="{% url 'dashboard:purity_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="purity_id" id="pd-purity-id">
+      <input type="hidden" name="metal_id" id="pd-metal-id">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Metal</label>
+          <input type="text" id="pd-metal-name" disabled
+                 class="w-full border border-gray-100 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Purity Label *</label>
+          <input type="text" name="label" id="pd-label" placeholder="e.g. 22K, 18K, 925" required
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Fineness <span class="font-normal text-gray-400">(e.g. 0.916 for 22K, 916 for millesimal, 91.6 for %)</span></label>
+          <input type="number" name="fineness" id="pd-fineness" step="0.001" min="0" max="1000" placeholder="0.916" required
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+        <label class="flex items-center gap-2.5 cursor-pointer">
+          <input type="checkbox" name="is_active" id="pd-active" checked class="w-4 h-4 rounded accent-amber-600">
+          <span class="text-sm text-gray-700">Active</span>
+        </label>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">Save Purity</button>
+        <button type="button" onclick="closePurityDialog()" class="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ===== DIAMOND SERIES DIALOG ===== -->
+<div id="series-dialog" class="fixed inset-0 z-50 hidden items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closeSeriesDialog()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto p-6">
+    <h3 class="font-semibold text-gray-800 mb-5" id="series-dialog-title">Add Diamond Series</h3>
+    <form method="post" action="{% url 'dashboard:diamond_series_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="series_id" id="sd-id">
+      <div class="space-y-4">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Series Name *</label>
+            <input type="text" name="name" id="sd-name" placeholder="e.g. Classic, Premium, Signature" required
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Rate per Carat (₹) *</label>
+            <input type="number" name="rate_per_carat" id="sd-rate" step="0.01" min="0" placeholder="45000" required
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Applies To</label>
+            <select name="diamond_type" id="sd-type"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+              <option value="Both">Both (Natural & Lab)</option>
+              <option value="Natural">Natural Only</option>
+              <option value="Lab">Lab-grown Only</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Description</label>
+            <input type="text" name="description" id="sd-desc" placeholder="e.g. SI1-SI2 clarity, G-H color"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+        </div>
+
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-semibold text-gray-500 mb-3">Quality Details <span class="text-gray-400 font-normal">(auto-filled on products)</span></p>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Cut</label>
+              <input type="text" name="cut" id="sd-cut" placeholder="e.g. Excellent"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Clarity</label>
+              <input type="text" name="clarity" id="sd-clarity" placeholder="e.g. VS1-VS2"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Color</label>
+              <input type="text" name="color" id="sd-color" placeholder="e.g. G-H"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Setting Charges (₹)</label>
+            <input type="number" name="setting_charges" id="sd-setting" min="0" step="0.01" placeholder="500"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Cert. Cost (₹)</label>
+            <input type="number" name="certification_cost" id="sd-cert" min="0" step="0.01" placeholder="2000"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Brand Margin (%)</label>
+            <input type="number" name="brand_margin" id="sd-margin" min="0" max="100" step="0.1" placeholder="10"
+                   class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          </div>
+        </div>
+
+        <div class="border-t border-gray-100 pt-4">
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <div class="relative">
+              <input type="checkbox" name="is_active" id="sd-active" checked class="sr-only peer">
+              <div class="w-10 h-5 bg-gray-200 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+            </div>
+            <span class="text-sm text-gray-700">Active (visible to customers)</span>
+          </label>
+        </div>
+
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">Save Series</button>
+        <button type="button" onclick="closeSeriesDialog()" class="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ---- Purity Dialog ----
+function openPurityDialog(purityId, metalId, metalName, label, fineness, isActive) {
+  document.getElementById('pd-purity-id').value = purityId;
+  document.getElementById('pd-metal-id').value = metalId;
+  document.getElementById('pd-metal-name').value = metalName;
+  document.getElementById('pd-label').value = label;
+  document.getElementById('pd-fineness').value = fineness;
+  document.getElementById('pd-active').checked = isActive;
+  document.getElementById('purity-dialog-title').textContent = purityId ? 'Edit Purity' : 'Add Purity';
+  const dlg = document.getElementById('purity-dialog');
+  dlg.classList.remove('hidden');
+  dlg.classList.add('flex');
+}
+function closePurityDialog() {
+  const dlg = document.getElementById('purity-dialog');
+  dlg.classList.add('hidden');
+  dlg.classList.remove('flex');
+}
+
+// ---- Series Dialog ----
+function openSeriesDialog(id='', name='', rate='', type='Both', desc='', cut='', clarity='', color='', setting='', cert='', margin='', active=true) {
+  document.getElementById('sd-id').value = id;
+  document.getElementById('sd-name').value = name;
+  document.getElementById('sd-rate').value = rate;
+  document.getElementById('sd-type').value = type;
+  document.getElementById('sd-desc').value = desc;
+  document.getElementById('sd-cut').value = cut;
+  document.getElementById('sd-clarity').value = clarity;
+  document.getElementById('sd-color').value = color;
+  document.getElementById('sd-setting').value = setting;
+  document.getElementById('sd-cert').value = cert;
+  document.getElementById('sd-margin').value = margin;
+  document.getElementById('sd-active').checked = active;
+  document.getElementById('series-dialog-title').textContent = id ? 'Edit Diamond Series' : 'Add Diamond Series';
+  const dlg = document.getElementById('series-dialog');
+  dlg.classList.remove('hidden');
+  dlg.classList.add('flex');
+}
+function closeSeriesDialog() {
+  const dlg = document.getElementById('series-dialog');
+  dlg.classList.add('hidden');
+  dlg.classList.remove('flex');
+}
+
+// ---- Metal toggle ----
+function toggleMetalRow(metalId, active) {
+  const label = document.getElementById('active_label_' + metalId);
+  if (label) label.textContent = active ? 'Active' : 'Inactive';
+  // enable/disable the price input
+  const priceInput = document.querySelector(`input[name="price_${metalId}"]`);
+  if (priceInput) priceInput.disabled = !active;
+}
+
+// ---- Delete confirm ----
+function confirmDelete(type) {
+  return confirm('Delete this ' + type + '? This cannot be undone.');
+}
+
+// ---- Live calculated price update ----
+document.querySelectorAll('input[name^="price_"]').forEach(input => {
+  input.addEventListener('input', function() {
+    const metalId = this.name.replace('price_', '');
+    const newBase = parseFloat(this.value) || 0;
+    document.querySelectorAll(`td[data-metal="${metalId}"]`).forEach(cell => {
+      const fineness = parseFloat(cell.dataset.fineness) || 0;
+      const calc = Math.round(newBase * fineness);
+      cell.textContent = '₹' + calc.toLocaleString('en-IN');
+    });
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Blog - Admin{% endblock %}
+{% block page_title %}Blog Posts{% endblock %}
+{% block content %}
+<div class="flex justify-end mb-4">
+  <a href="{% url 'dashboard:blog_create' %}" class="bg-gold text-white px-4 py-2 rounded-lg text-sm font-semibold">+ New Post</a>
+</div>
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+      <tr><th class="px-4 py-3 text-left">Title</th><th class="px-4 py-3 text-left">Author</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Date</th><th class="px-4 py-3 text-left">Actions</th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-50">
+      {% for post in posts %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium max-w-xs truncate">{{ post.title }}</td>
+        <td class="px-4 py-3 text-gray-500">{{ post.author }}</td>
+        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs {% if post.status == 'published' %}bg-green-100 text-green-600{% else %}bg-gray-100 text-gray-500{% endif %}">{{ post.get_status_display }}</span></td>
+        <td class="px-4 py-3 text-gray-400 text-xs">{{ post.created_at|date:"d M Y" }}</td>
+        <td class="px-4 py-3">
+          <div class="flex gap-2">
+            <a href="{% url 'dashboard:blog_edit' post.id %}" class="text-gold hover:underline text-xs">Edit</a>
+            {% if post.status == 'published' %}<a href="{% url 'blog:detail' post.slug %}" target="_blank" class="text-gray-400 hover:text-gold text-xs">View</a>{% endif %}
+            <form method="post" action="{% url 'dashboard:blog_delete' post.id %}" onsubmit="return confirm('Delete?')">{% csrf_token %}<button class="text-red-400 text-xs">Delete</button></form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">No posts yet. <a href="{% url 'dashboard:blog_create' %}" class="text-gold">Create one</a></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

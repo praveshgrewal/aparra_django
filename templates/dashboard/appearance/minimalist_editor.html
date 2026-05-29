@@ -1,0 +1,154 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load dashboard_extras %}
+{% block title %}Minimalist Editor - Admin{% endblock %}
+{% block page_title %}Minimalist Homepage Editor{% endblock %}
+
+{% block content %}
+<div class="flex gap-6">
+
+  <!-- Section list sidebar -->
+  <div class="w-52 flex-shrink-0 space-y-1">
+    {% for sec_id, sec_label in sections %}
+    <button type="button" onclick="showSection('{{ sec_id }}')" id="tab-{{ sec_id }}"
+            class="section-tab w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm border border-transparent transition-colors text-gray-600 hover:bg-white hover:border-gray-200">
+      <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-700 text-xs flex items-center justify-center font-bold flex-shrink-0">{{ forloop.counter }}</span>
+      {{ sec_label }}
+    </button>
+    {% endfor %}
+    <div class="pt-3 border-t border-gray-200">
+      <a href="{% url 'dashboard:appearance' %}" class="text-xs text-gray-400 hover:text-gray-600 px-3">← Appearance</a>
+    </div>
+  </div>
+
+  <!-- Editor panel -->
+  <div class="flex-1 min-w-0">
+
+    <!-- Save status -->
+    <div id="save-status" class="hidden mb-4 px-4 py-2 rounded-lg text-sm"></div>
+
+    {% for sec_id, sec_label in sections %}
+    <div id="section-{{ sec_id }}" class="section-panel hidden">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="font-semibold text-gray-800">{{ sec_label }}</h2>
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <span class="text-xs text-gray-500">Enabled</span>
+            <div class="relative">
+              <input type="checkbox" id="enabled-{{ sec_id }}" {% if content|dict_get:sec_id|dict_get:'enabled' %}checked{% endif %}
+                     class="sr-only peer" onchange="saveSectionEnabled('{{ sec_id }}', this.checked)">
+              <div class="w-10 h-5 bg-gray-200 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+            </div>
+          </label>
+        </div>
+        <div class="p-6">
+          <textarea id="json-{{ sec_id }}" rows="18"
+                    class="w-full font-mono text-xs border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-400/50 resize-none">{{ content|dict_get_json:sec_id }}</textarea>
+          <div class="flex gap-3 mt-4">
+            <button type="button" onclick="saveSection('{{ sec_id }}')"
+                    class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+              Save Section
+            </button>
+            <a href="{% url 'store:homepage' %}" target="_blank"
+               class="border border-gray-200 text-gray-600 text-sm px-5 py-2 rounded-lg hover:border-amber-400 transition-colors">
+              Preview →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Fallback full JSON editor -->
+    <div id="section-raw" class="section-panel hidden">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <h2 class="font-semibold text-gray-800 mb-4">Raw JSON Editor (Full)</h2>
+        <textarea id="full-json" rows="30"
+                  class="w-full font-mono text-xs border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-400/50 resize-none">{{ content_json }}</textarea>
+        <button type="button" onclick="saveFullJson()" class="mt-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+          Save All
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const SAVE_URL = '{% url "dashboard:minimalist_editor_save" %}';
+
+function showSection(id) {
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.section-tab').forEach(t => {
+    t.classList.remove('bg-white', 'border-amber-300', 'text-amber-800', 'font-semibold');
+    t.classList.add('border-transparent', 'text-gray-600');
+  });
+  const panel = document.getElementById('section-' + id);
+  if (panel) panel.classList.remove('hidden');
+  const tab = document.getElementById('tab-' + id);
+  if (tab) {
+    tab.classList.add('bg-white', 'border-amber-300', 'text-amber-800', 'font-semibold');
+    tab.classList.remove('border-transparent', 'text-gray-600');
+  }
+}
+
+function showStatus(msg, ok) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'mb-4 px-4 py-2 rounded-lg text-sm ' + (ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200');
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+function saveSection(secId) {
+  const raw = document.getElementById('json-' + secId).value;
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { showStatus('Invalid JSON: ' + e.message, false); return; }
+
+  // Preserve enabled from checkbox
+  const cb = document.getElementById('enabled-' + secId);
+  if (cb) data.enabled = cb.checked;
+
+  const form = new FormData();
+  form.append('csrfmiddlewaretoken', CSRF);
+  form.append('section', secId);
+  form.append('section_data', JSON.stringify(data));
+
+  fetch(SAVE_URL, { method: 'POST', body: form })
+    .then(r => r.json())
+    .then(d => showStatus(d.success ? '✓ Section saved' : 'Error: ' + d.error, d.success))
+    .catch(() => showStatus('Network error', false));
+}
+
+function saveSectionEnabled(secId, enabled) {
+  const raw = document.getElementById('json-' + secId).value;
+  let data = {};
+  try { data = JSON.parse(raw); } catch (e) {}
+  data.enabled = enabled;
+  document.getElementById('json-' + secId).value = JSON.stringify(data, null, 2);
+  saveSection(secId);
+}
+
+function saveFullJson() {
+  const raw = document.getElementById('full-json').value;
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { showStatus('Invalid JSON: ' + e.message, false); return; }
+
+  const form = new FormData();
+  form.append('csrfmiddlewaretoken', CSRF);
+  form.append('content_json', JSON.stringify(data));
+
+  fetch(SAVE_URL, { method: 'POST', body: form })
+    .then(r => r.json())
+    .then(d => showStatus(d.success ? '✓ Saved' : 'Error', d.success))
+    .catch(() => showStatus('Network error', false));
+}
+
+// Show first section by default
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('.section-tab');
+  if (first) first.click();
+});
+</script>
+{% endblock %}

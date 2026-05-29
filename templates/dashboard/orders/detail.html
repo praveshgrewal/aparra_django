@@ -1,0 +1,64 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Order #{{ order.id }} - Admin{% endblock %}
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-5">
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+      <h2 class="font-semibold mb-4">Items</h2>
+      {% for item in order.items %}
+      <div class="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+        {% if item.image %}<img src="{{ item.image }}" alt="{{ item.product_name }}" class="w-14 h-14 rounded-lg object-cover bg-gray-100">{% endif %}
+        <div class="flex-1">
+          <p class="font-medium text-sm">{{ item.product_name }}</p>
+          {% if item.variant %}<p class="text-xs text-gray-400">{{ item.variant }}</p>{% endif %}
+          <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
+        </div>
+        <p class="font-semibold">₹{{ item.price|floatformat:0 }}</p>
+      </div>
+      {% endfor %}
+      <div class="flex justify-between pt-4 font-bold text-lg">
+        <span>Total</span><span class="text-gold">₹{{ order.total|floatformat:0 }}</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+      <h2 class="font-semibold mb-3">Shipping Address</h2>
+      <p class="text-sm text-gray-700">{{ order.shipping_address.name }}</p>
+      <p class="text-sm text-gray-600">{{ order.shipping_address.address_line1 }}{% if order.shipping_address.address_line2 %}, {{ order.shipping_address.address_line2 }}{% endif %}</p>
+      <p class="text-sm text-gray-600">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.pincode }}</p>
+      <p class="text-sm text-gray-600 mt-1">📞 {{ order.shipping_address.phone }}</p>
+      <p class="text-sm text-gray-600">✉️ {{ order.customer_email }}</p>
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+      <h2 class="font-semibold mb-4">Order Status</h2>
+      <form method="post" action="{% url 'dashboard:order_update_status' order.id %}">
+        {% csrf_token %}
+        <select name="status" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-1 focus:ring-gold">
+          {% for val, label in order.STATUS_CHOICES %}
+          <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="w-full bg-gold text-white font-semibold py-2 rounded-xl text-sm hover:bg-gold-dark">Update Status</button>
+      </form>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm text-sm">
+      <h2 class="font-semibold mb-3">Details</h2>
+      <div class="space-y-2">
+        <div class="flex justify-between"><span class="text-gray-500">Order Date</span><span>{{ order.created_at|date:"d M Y" }}</span></div>
+        <div class="flex justify-between"><span class="text-gray-500">Payment</span><span class="{% if order.payment_status == 'paid' %}text-green-600{% else %}text-amber-600{% endif %}">{{ order.payment_status|capfirst }}</span></div>
+        {% if order.tracking_number %}
+        <div class="flex justify-between"><span class="text-gray-500">Tracking</span><span class="font-mono text-xs">{{ order.tracking_number }}</span></div>
+        {% endif %}
+        {% if order.discount.code %}
+        <div class="flex justify-between"><span class="text-gray-500">Discount</span><span class="text-green-600">-₹{{ order.discount.amount|floatformat:0 }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

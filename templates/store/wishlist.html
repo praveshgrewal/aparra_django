@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Wishlist - Aparra{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+  <h1 class="font-headline text-3xl font-bold mb-8">My Wishlist</h1>
+
+  {% if wishlist.products.all %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {% for product in wishlist.products.all %}
+    {% include 'partials/product_card.html' %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-24">
+    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary flex items-center justify-center">
+      <svg class="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+    </div>
+    <h2 class="font-headline text-2xl font-medium mb-2">Your wishlist is empty</h2>
+    <p class="text-muted-foreground text-sm mb-6">Save items you love by clicking the heart icon on any product</p>
+    <a href="{% url 'store:shop' %}" class="inline-block bg-primary text-primary-foreground px-8 py-3 rounded-md font-semibold hover:bg-primary/90 transition-colors">Shop Now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function addToCart(productId, price) {
+  fetch("{% url 'store:cart_add' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({product_id: productId, quantity: 1, price: price})
+  }).then(r => r.json()).then(data => {
+    if (data.success) { updateCartBadge(data.cart_count); showToast('Added to cart!'); }
+  });
+}
+
+function toggleWishlist(e, productId) {
+  e.preventDefault(); e.stopPropagation();
+  fetch("{% url 'store:wishlist_toggle' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({product_id: productId})
+  })
+  .then(r => r.json())
+  .then(data => { showToast(data.added ? 'Added to wishlist!' : 'Removed from wishlist'); if (!data.added) location.reload(); });
+}
+</script>
+{% endblock %}

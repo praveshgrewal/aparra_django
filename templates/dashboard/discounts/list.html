@@ -1,0 +1,29 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Discounts - Admin{% endblock %}
+{% block page_title %}Discount Codes{% endblock %}
+{% block content %}
+<div class="flex justify-end mb-4">
+  <a href="{% url 'dashboard:discount_create' %}" class="bg-gold text-white px-4 py-2 rounded-lg text-sm font-semibold">+ Add Discount</a>
+</div>
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-xs text-gray-500 uppercase"><tr><th class="px-4 py-3 text-left">Code</th><th class="px-4 py-3 text-left">Type</th><th class="px-4 py-3 text-left">Value</th><th class="px-4 py-3 text-left">Used</th><th class="px-4 py-3 text-left">Status</th><th class="px-4 py-3 text-left">Actions</th></tr></thead>
+    <tbody class="divide-y divide-gray-50">
+      {% for d in discounts %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-mono font-semibold">{{ d.code }}</td>
+        <td class="px-4 py-3 text-gray-500">{{ d.type }}</td>
+        <td class="px-4 py-3">{% if d.type == 'percentage' %}{{ d.value }}%{% else %}₹{{ d.value }}{% endif %}</td>
+        <td class="px-4 py-3 text-gray-500">{{ d.usage_count }}{% if d.usage_limit %}/{{ d.usage_limit }}{% endif %}</td>
+        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs {% if d.is_active %}bg-green-100 text-green-600{% else %}bg-gray-100 text-gray-500{% endif %}">{% if d.is_active %}Active{% else %}Off{% endif %}</span></td>
+        <td class="px-4 py-3">
+          <form method="post" action="{% url 'dashboard:discount_delete' d.id %}" onsubmit="return confirm('Delete?')">{% csrf_token %}<button class="text-red-400 hover:text-red-600 text-xs">Delete</button></form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No discount codes</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
