@@ -13,9 +13,16 @@
         <h2 class="font-semibold text-gray-800">Metal Pricing</h2>
         <p class="text-xs text-gray-400 mt-0.5">Set base metal price per gram. Purity prices are calculated automatically.</p>
       </div>
-      <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
-        Save All Prices
-      </button>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="openMetalDialog()"
+                class="flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Metal
+        </button>
+        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+          Save All Prices
+        </button>
+      </div>
     </div>
 
     <div class="divide-y divide-gray-100">
@@ -32,7 +39,7 @@
             <input type="number" name="price_{{ metal.id }}" value="{{ metal.price_per_gram }}"
                    step="0.01" min="0" placeholder="0.00"
                    class="w-36 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400"
-                   {% if not metal.is_active %}disabled{% endif %}>
+                   {% if not metal.is_active %}style="opacity:0.4"{% endif %}>
           </div>
 
           <!-- Active toggle -->
@@ -50,13 +57,22 @@
             </span>
           </label>
 
-          <!-- Add purity button -->
-          <button type="button"
-                  onclick="openPurityDialog('', '{{ metal.id }}', '{{ metal.name }}', '', '', true)"
-                  class="ml-auto flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Purity
-          </button>
+          <!-- Metal action buttons -->
+          <div class="ml-auto flex items-center gap-2">
+            <button type="button"
+                    onclick="openPurityDialog('', '{{ metal.id }}', '{{ metal.name }}', '', '', true)"
+                    class="flex items-center gap-1.5 border border-gray-200 text-gray-600 hover:border-amber-400 hover:text-amber-700 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Purity
+            </button>
+            <button type="button"
+                    onclick="openMetalDialog('{{ metal.id }}', '{{ metal.name|escapejs }}', '{{ metal.price_per_gram }}', {{ metal.is_active|yesno:'true,false' }})"
+                    class="text-xs text-gray-500 hover:text-amber-600 font-medium px-2 py-1.5 rounded hover:bg-amber-50 transition-colors">Edit</button>
+            <form method="post" action="{% url 'dashboard:metal_delete' metal.id %}" class="inline" onsubmit="return confirm('Delete {{ metal.name|escapejs }}? This will not delete associated products.')">
+              {% csrf_token %}
+              <button type="submit" class="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1.5 rounded hover:bg-red-50 transition-colors">Delete</button>
+            </form>
+          </div>
         </div>
 
         <!-- Purities table -->
@@ -191,6 +207,39 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+
+
+<!-- ===== METAL DIALOG ===== -->
+<div id="metal-dialog" class="fixed inset-0 z-50 hidden items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closeMetalDialog()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+    <h3 class="font-semibold text-gray-800 mb-5" id="metal-dialog-title">Add Metal</h3>
+    <form method="post" action="{% url 'dashboard:metal_save' %}">
+      {% csrf_token %}
+      <input type="hidden" name="metal_id" id="md-metal-id">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Metal Name *</label>
+          <input type="text" name="name" id="md-name" placeholder="e.g. Gold, Silver, Platinum" required
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Price per gram (₹) *</label>
+          <input type="number" name="price_per_gram" id="md-price" step="0.01" min="0" placeholder="6500" required
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+        <label class="flex items-center gap-2.5 cursor-pointer">
+          <input type="checkbox" name="is_active" id="md-active" checked class="w-4 h-4 rounded accent-amber-600">
+          <span class="text-sm text-gray-700">Active</span>
+        </label>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">Save Metal</button>
+        <button type="button" onclick="closeMetalDialog()" class="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -331,6 +380,23 @@
 </div>
 
 <script>
+// ---- Metal Dialog ----
+function openMetalDialog(id='', name='', price='', active=true) {
+  document.getElementById('md-metal-id').value = id;
+  document.getElementById('md-name').value = name;
+  document.getElementById('md-price').value = price;
+  document.getElementById('md-active').checked = active;
+  document.getElementById('metal-dialog-title').textContent = id ? 'Edit Metal' : 'Add Metal';
+  const dlg = document.getElementById('metal-dialog');
+  dlg.classList.remove('hidden');
+  dlg.classList.add('flex');
+}
+function closeMetalDialog() {
+  const dlg = document.getElementById('metal-dialog');
+  dlg.classList.add('hidden');
+  dlg.classList.remove('flex');
+}
+
 // ---- Purity Dialog ----
 function openPurityDialog(purityId, metalId, metalName, label, fineness, isActive) {
   document.getElementById('pd-purity-id').value = purityId;
@@ -379,9 +445,8 @@ function closeSeriesDialog() {
 function toggleMetalRow(metalId, active) {
   const label = document.getElementById('active_label_' + metalId);
   if (label) label.textContent = active ? 'Active' : 'Inactive';
-  // enable/disable the price input
   const priceInput = document.querySelector(`input[name="price_${metalId}"]`);
-  if (priceInput) priceInput.disabled = !active;
+  if (priceInput) priceInput.style.opacity = active ? '' : '0.4';
 }
 
 // ---- Delete confirm ----

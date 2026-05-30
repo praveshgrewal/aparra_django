@@ -76,10 +76,12 @@ def product_list(request):
 
 @admin_required
 def product_create(request):
+    from store.models import DiamondSeries
     categories = Category.objects.filter(is_active=True)
     metals = Metal.objects.filter(is_active=True)
     purities = Purity.objects.filter(is_active=True)
     tax_classes = TaxClass.objects.filter(is_active=True)
+    diamond_series = DiamondSeries.objects.filter(is_active=True).order_by('name')
 
     if request.method == 'POST':
         try:
@@ -92,6 +94,7 @@ def product_create(request):
     return render(request, 'dashboard/products/form.html', {
         'categories': categories, 'metals': metals,
         'purities': purities, 'tax_classes': tax_classes,
+        'diamond_series': diamond_series,
     })
 
 
@@ -111,9 +114,14 @@ def product_edit(request, product_id):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
+    from store.models import DiamondSeries
+    diamond_series = DiamondSeries.objects.filter(is_active=True).order_by('name')
+    calculated_price = product.calculate_price() if product.auto_price_enabled else None
     return render(request, 'dashboard/products/form.html', {
         'product': product, 'categories': categories,
         'metals': metals, 'purities': purities, 'tax_classes': tax_classes,
+        'diamond_series': diamond_series,
+        'calculated_price': calculated_price,
     })
 
 
@@ -415,7 +423,19 @@ def metal_save(request):
         from store.models import generate_id
         Metal.objects.create(id=generate_id(), name=name, price_per_gram=price_per_gram, is_active=is_active)
         messages.success(request, 'Metal created.')
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'pricing' in referer:
+        return redirect('dashboard:pricing')
     return redirect('dashboard:metals_list')
+
+
+@admin_required
+@require_POST
+def metal_delete(request, metal_id):
+    metal = get_object_or_404(Metal, id=metal_id)
+    metal.delete()
+    messages.success(request, f'Metal "{metal.name}" deleted.')
+    return redirect('dashboard:pricing')
 
 
 @admin_required
@@ -822,16 +842,16 @@ def pricing_view(request):
 def pricing_save_metals(request):
     updated = 0
     for metal in Metal.objects.all():
-        key = f'price_{metal.id}'
-        if key in request.POST:
-            try:
-                metal.price_per_gram = float(request.POST[key] or 0)
-                active_key = f'active_{metal.id}'
-                metal.is_active = active_key in request.POST
-                metal.save(update_fields=['price_per_gram', 'is_active'])
-                updated += 1
-            except Exception:
-                pass
+        try:
+            price_key = f'price_{metal.id}'
+            active_key = f'active_{metal.id}'
+            if price_key in request.POST:
+                metal.price_per_gram = float(request.POST[price_key] or 0)
+            metal.is_active = active_key in request.POST
+            metal.save(update_fields=['price_per_gram', 'is_active'])
+            updated += 1
+        except Exception:
+            pass
     # Recalculate all product prices
     from store.models import Product
     for product in Product.objects.filter(auto_price_enabled=True):

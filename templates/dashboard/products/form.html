@@ -188,15 +188,50 @@
             <p class="text-xs text-amber-700 font-semibold">Current Calculated Price</p>
             <p class="text-xl font-bold text-amber-800 mt-1">₹{{ product.display_price|floatformat:0 }}</p>
           </div>
+          {% elif calculated_price %}
+          <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <p class="text-xs text-amber-700 font-semibold">Calculated Price (save to apply)</p>
+            <p class="text-xl font-bold text-amber-800 mt-1">₹{{ calculated_price|floatformat:0 }}</p>
+          </div>
           {% endif %}
         </div>
 
-        <!-- Diamond Details -->
+        <!-- Diamond Details Builder -->
         <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h2 class="font-semibold text-gray-800 mb-4">Diamond Details (JSON)</h2>
-          <p class="text-xs text-gray-400 mb-3">Array of diamond specs. Example: <code class="bg-gray-100 px-1 rounded">[{"shape":"Round","weight":0.5,"pieces":10,"clarity":"VS","color":"G","rate_per_carat":15000}]</code></p>
-          <textarea name="diamond_details_json" rows="5"
-                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 resize-none">{% if product.diamond_details %}{{ product.diamond_details|safe }}{% endif %}</textarea>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-semibold text-gray-800">Diamond Details</h2>
+              <p class="text-xs text-gray-400 mt-0.5">Select from your diamond series pricing — rates are pulled automatically.</p>
+            </div>
+            <button type="button" onclick="openDiamondDialog()"
+                    class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Diamond
+            </button>
+          </div>
+
+          <!-- Diamond rows table -->
+          <div id="diamond-table-wrap">
+            <table class="w-full text-sm" id="diamond-table">
+              <thead>
+                <tr class="bg-gray-50 text-xs text-gray-500 border-b border-gray-100">
+                  <th class="px-3 py-2 text-left">Series</th>
+                  <th class="px-3 py-2 text-left">Type</th>
+                  <th class="px-3 py-2 text-left">Quality</th>
+                  <th class="px-3 py-2 text-right">Wt (ct)</th>
+                  <th class="px-3 py-2 text-right">Pcs</th>
+                  <th class="px-3 py-2 text-right">Rate/ct</th>
+                  <th class="px-3 py-2 text-right">Value</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody id="diamond-rows"></tbody>
+            </table>
+            <p id="diamond-empty" class="text-xs text-gray-400 text-center py-6 hidden">No diamonds added. Click "Add Diamond" above.</p>
+          </div>
+
+          <!-- Hidden JSON field for form submission -->
+          <input type="hidden" name="diamond_details_json" id="diamond-json-hidden">
         </div>
       </div>
 
@@ -438,6 +473,80 @@
   #media-image-grid .img-card { cursor: grab; }
   #media-image-grid .img-card.dragging { opacity: 0.4; }
 </style>
+
+<!-- ===== DIAMOND DIALOG ===== -->
+<div id="diamond-dialog" class="fixed inset-0 z-50 hidden items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closeDiamondDialog()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+    <h3 class="font-semibold text-gray-800 mb-5" id="diamond-dialog-title">Add Diamond</h3>
+    <input type="hidden" id="dd-edit-index" value="">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Diamond Series *</label>
+        <select id="dd-series" onchange="onDiamondSeriesChange(this)"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+          <option value="">— Select a series —</option>
+          {% for s in diamond_series %}
+          <option value="{{ s.id }}"
+                  data-name="{{ s.name|escapejs }}"
+                  data-rate="{{ s.rate_per_carat }}"
+                  data-type="{{ s.diamond_type }}"
+                  data-cut="{{ s.cut|default:''|escapejs }}"
+                  data-color="{{ s.color|default:''|escapejs }}"
+                  data-clarity="{{ s.clarity|default:''|escapejs }}"
+                  data-setting="{{ s.setting_charges|default:'' }}"
+                  data-cert="{{ s.certification_cost|default:'' }}"
+                  data-margin="{{ s.brand_margin|default:'' }}">
+            {{ s.name }} — ₹{{ s.rate_per_carat|floatformat:0 }}/ct ({{ s.diamond_type }})
+          </option>
+          {% empty %}
+          <option disabled>No diamond series defined — add them in Pricing</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Auto-filled quality info -->
+      <div id="dd-quality-row" class="hidden bg-gray-50 rounded-lg px-4 py-3 text-xs text-gray-600 space-y-1">
+        <div class="flex gap-4 flex-wrap">
+          <span>Type: <strong id="dd-info-type" class="text-gray-800"></strong></span>
+          <span id="dd-info-cut-wrap">Cut: <strong id="dd-info-cut" class="text-gray-800"></strong></span>
+          <span id="dd-info-color-wrap">Color: <strong id="dd-info-color" class="text-gray-800"></strong></span>
+          <span id="dd-info-clarity-wrap">Clarity: <strong id="dd-info-clarity" class="text-gray-800"></strong></span>
+        </div>
+        <div class="flex gap-4 flex-wrap">
+          <span>Rate: <strong id="dd-info-rate" class="text-amber-700"></strong>/ct</span>
+          <span id="dd-info-setting-wrap">Setting: <strong id="dd-info-setting" class="text-gray-800"></strong></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Total Weight (carats) *</label>
+          <input type="number" id="dd-weight" step="0.01" min="0" placeholder="0.50"
+                 oninput="updateDiamondPreview()"
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Number of Pieces</label>
+          <input type="number" id="dd-count" step="1" min="0" placeholder="1"
+                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">
+        </div>
+      </div>
+
+      <!-- Calculated value preview -->
+      <div id="dd-preview" class="hidden bg-amber-50 rounded-lg px-4 py-3 border border-amber-200 text-sm">
+        Estimated value: <strong id="dd-preview-val" class="text-amber-800 text-base"></strong>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button type="button" onclick="saveDiamondRow()"
+              class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">Save Diamond</button>
+      <button type="button" onclick="closeDiamondDialog()"
+              class="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Tab switching ──────────────────────────────────────────────────────
 function showTab(name) {
@@ -641,9 +750,170 @@ function doUploadToLibrary(files) {
 }
 
 // Ensure media_json is always submitted with the form
-document.getElementById('product-form').addEventListener('submit', syncHidden);
+document.getElementById('product-form').addEventListener('submit', function() {
+  syncHidden();
+  syncDiamondHidden();
+});
 
 // Init on page load
 renderGrid();
+
+// ── Diamond Builder ─────────────────────────────────────────────────────────
+let diamonds = [];
+
+(function initDiamonds() {
+  const raw = {{ product.diamond_details|default:"[]"|safe }};
+  diamonds = Array.isArray(raw) ? raw : [];
+  renderDiamondRows();
+})();
+
+function syncDiamondHidden() {
+  document.getElementById('diamond-json-hidden').value = JSON.stringify(diamonds);
+}
+
+function renderDiamondRows() {
+  const tbody = document.getElementById('diamond-rows');
+  const empty = document.getElementById('diamond-empty');
+  tbody.innerHTML = '';
+  if (!diamonds.length) {
+    document.getElementById('diamond-table').classList.add('hidden');
+    empty.classList.remove('hidden');
+    syncDiamondHidden();
+    return;
+  }
+  document.getElementById('diamond-table').classList.remove('hidden');
+  empty.classList.add('hidden');
+  diamonds.forEach((d, i) => {
+    const value = Math.round((d.rate_per_carat || 0) * (d.weight || 0));
+    const quality = [d.cut, d.color, d.clarity].filter(Boolean).join(' · ') || '—';
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-gray-50 hover:bg-gray-50';
+    tr.innerHTML = `
+      <td class="px-3 py-3 font-medium text-gray-800">${d.name || '—'}</td>
+      <td class="px-3 py-3 text-gray-500 text-xs">${d.diamond_type || '—'}</td>
+      <td class="px-3 py-3 text-gray-500 text-xs">${quality}</td>
+      <td class="px-3 py-3 text-right font-mono text-sm">${d.weight || '—'}</td>
+      <td class="px-3 py-3 text-right font-mono text-sm">${d.count || '—'}</td>
+      <td class="px-3 py-3 text-right font-mono text-sm text-amber-700">₹${(d.rate_per_carat||0).toLocaleString('en-IN')}</td>
+      <td class="px-3 py-3 text-right font-semibold text-amber-800">₹${value.toLocaleString('en-IN')}</td>
+      <td class="px-3 py-3 text-right">
+        <button type="button" onclick="editDiamondRow(${i})" class="text-xs text-gray-500 hover:text-amber-600 px-1.5 py-1 rounded hover:bg-amber-50 transition-colors">Edit</button>
+        <button type="button" onclick="removeDiamond(${i})" class="text-xs text-red-400 hover:text-red-600 px-1.5 py-1 rounded hover:bg-red-50 transition-colors">Remove</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  syncDiamondHidden();
+}
+
+function openDiamondDialog(editIdx) {
+  document.getElementById('dd-edit-index').value = editIdx !== undefined ? editIdx : '';
+  document.getElementById('dd-series').value = '';
+  document.getElementById('dd-weight').value = '';
+  document.getElementById('dd-count').value = '';
+  document.getElementById('dd-quality-row').classList.add('hidden');
+  document.getElementById('dd-preview').classList.add('hidden');
+  document.getElementById('diamond-dialog-title').textContent = editIdx !== undefined ? 'Edit Diamond' : 'Add Diamond';
+
+  if (editIdx !== undefined) {
+    const d = diamonds[editIdx];
+    const opt = document.querySelector(`#dd-series option[value="${d.series_id}"]`);
+    if (opt) {
+      document.getElementById('dd-series').value = d.series_id;
+      onDiamondSeriesChange(document.getElementById('dd-series'));
+    }
+    document.getElementById('dd-weight').value = d.weight || '';
+    document.getElementById('dd-count').value = d.count || '';
+    updateDiamondPreview();
+  }
+
+  const dlg = document.getElementById('diamond-dialog');
+  dlg.classList.remove('hidden');
+  dlg.classList.add('flex');
+}
+
+function closeDiamondDialog() {
+  const dlg = document.getElementById('diamond-dialog');
+  dlg.classList.add('hidden');
+  dlg.classList.remove('flex');
+}
+
+function editDiamondRow(i) { openDiamondDialog(i); }
+
+function removeDiamond(i) {
+  if (confirm('Remove this diamond entry?')) {
+    diamonds.splice(i, 1);
+    renderDiamondRows();
+  }
+}
+
+function onDiamondSeriesChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) {
+    document.getElementById('dd-quality-row').classList.add('hidden');
+    document.getElementById('dd-preview').classList.add('hidden');
+    return;
+  }
+  const setText = (id, val, wrapId) => {
+    document.getElementById(id).textContent = val || '—';
+    if (wrapId) document.getElementById(wrapId).style.display = val ? '' : 'none';
+  };
+  setText('dd-info-type', opt.dataset.type);
+  setText('dd-info-cut', opt.dataset.cut, 'dd-info-cut-wrap');
+  setText('dd-info-color', opt.dataset.color, 'dd-info-color-wrap');
+  setText('dd-info-clarity', opt.dataset.clarity, 'dd-info-clarity-wrap');
+  document.getElementById('dd-info-rate').textContent = '₹' + parseFloat(opt.dataset.rate || 0).toLocaleString('en-IN');
+  const setting = opt.dataset.setting;
+  document.getElementById('dd-info-setting').textContent = setting ? '₹' + parseFloat(setting).toLocaleString('en-IN') : '';
+  document.getElementById('dd-info-setting-wrap').style.display = setting ? '' : 'none';
+  document.getElementById('dd-quality-row').classList.remove('hidden');
+  updateDiamondPreview();
+}
+
+function updateDiamondPreview() {
+  const sel = document.getElementById('dd-series');
+  const opt = sel.options[sel.selectedIndex];
+  const weight = parseFloat(document.getElementById('dd-weight').value) || 0;
+  if (!opt || !opt.value || !weight) {
+    document.getElementById('dd-preview').classList.add('hidden');
+    return;
+  }
+  const rate = parseFloat(opt.dataset.rate || 0);
+  const val = Math.round(rate * weight);
+  document.getElementById('dd-preview-val').textContent = '₹' + val.toLocaleString('en-IN');
+  document.getElementById('dd-preview').classList.remove('hidden');
+}
+
+function saveDiamondRow() {
+  const sel = document.getElementById('dd-series');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) { alert('Please select a diamond series.'); return; }
+  const weight = parseFloat(document.getElementById('dd-weight').value);
+  if (!weight || weight <= 0) { alert('Please enter a valid weight.'); return; }
+
+  const entry = {
+    series_id: opt.value,
+    name: opt.dataset.name,
+    diamond_type: opt.dataset.type,
+    cut: opt.dataset.cut || '',
+    color: opt.dataset.color || '',
+    clarity: opt.dataset.clarity || '',
+    rate_per_carat: parseFloat(opt.dataset.rate || 0),
+    weight: weight,
+    count: parseInt(document.getElementById('dd-count').value) || null,
+    setting_charges: opt.dataset.setting ? parseFloat(opt.dataset.setting) : null,
+    certification_cost: opt.dataset.cert ? parseFloat(opt.dataset.cert) : null,
+    brand_margin: opt.dataset.margin ? parseFloat(opt.dataset.margin) : null,
+  };
+
+  const editIdx = document.getElementById('dd-edit-index').value;
+  if (editIdx !== '') {
+    diamonds[parseInt(editIdx)] = entry;
+  } else {
+    diamonds.push(entry);
+  }
+
+  renderDiamondRows();
+  closeDiamondDialog();
+}
 </script>
 {% endblock %}

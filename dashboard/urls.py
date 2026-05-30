@@ -34,9 +34,10 @@ urlpatterns = [
     path('blog/<str:post_id>/edit/', views.blog_edit, name='blog_edit'),
     path('blog/<str:post_id>/delete/', views.blog_delete, name='blog_delete'),
 
-    # Metals & Purities
+    # Metals & Purities (managed from Pricing page)
     path('metals/', views.metals_list, name='metals_list'),
     path('metals/save/', views.metal_save, name='metal_save'),
+    path('metals/<str:metal_id>/delete/', views.metal_delete, name='metal_delete'),
     path('purities/save/', views.purity_save, name='purity_save'),
 
     # Tax
