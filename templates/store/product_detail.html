@@ -2,503 +2,639 @@
 {% block title %}{{ product.name }} - Aparra{% endblock %}
 
 {% block content %}
-<div class="bg-secondary/30 min-h-screen">
-  <div class="container mx-auto py-8 md:py-12 px-4">
+<div class="bg-background min-h-screen">
+  <div class="container mx-auto px-4 md:px-6 py-6 md:py-10">
 
     <!-- Breadcrumb -->
-    <nav class="text-xs text-muted-foreground mb-6 flex items-center gap-1.5 flex-wrap">
+    <nav class="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap mb-8">
       <a href="{% url 'store:homepage' %}" class="hover:text-primary transition-colors">Home</a>
-      <span class="opacity-50">/</span>
-      <a href="{% url 'store:shop' %}" class="hover:text-primary transition-colors">Shop</a>
+      <span>/</span>
       {% if primary_category %}
-      <span class="opacity-50">/</span>
       <a href="{% url 'store:category_products' primary_category.id %}" class="hover:text-primary transition-colors">{{ primary_category.name }}</a>
+      <span>/</span>
       {% endif %}
-      <span class="opacity-50">/</span>
       <span class="text-foreground">{{ product.name }}</span>
     </nav>
 
-    <!-- Product Card -->
-    <div class="bg-card rounded-lg border border-border p-4 sm:p-6 lg:p-8 mb-8">
-      <div class="grid md:grid-cols-2 gap-8 lg:gap-16 items-start">
+    <!-- Main Grid -->
+    <div class="grid md:grid-cols-2 gap-10 lg:gap-16 items-start mb-12">
 
-        <!-- Gallery -->
+      <!-- LEFT: Gallery -->
+      <div class="flex gap-3">
+        <!-- Vertical thumbnails -->
+        {% if product.media|length > 1 %}
+        <div class="flex flex-col gap-2 w-16 flex-shrink-0">
+          {% for img in product.media %}
+          <button onclick="setMainImage('{{ img.url }}', this)"
+                  class="thumb-btn aspect-square rounded-md overflow-hidden border-2 transition-colors
+                         {% if forloop.first %}border-primary{% else %}border-border hover:border-primary{% endif %}">
+            <img src="{{ img.url }}" alt="{{ product.name }}" class="w-full h-full object-cover"
+                 onerror="this.src='https://placehold.co/80x80/f5f0e8/b8a98a?text=.'">
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Main image -->
+        <div class="flex-1 relative rounded-lg overflow-hidden bg-card border border-border" style="aspect-ratio:1/1">
+          {% if product.media %}
+          <img id="main-product-image" src="{{ product.media.0.url }}" alt="{{ product.name }}"
+               class="w-full h-full object-cover"
+               onerror="this.src='https://placehold.co/600x600/f5f0e8/b8a98a?text=Jewellery'">
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center text-muted-foreground">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          {% endif %}
+          {% if product.discount_percentage %}
+          <div class="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2.5 py-1 rounded">{{ product.discount_percentage|floatformat:0 }}% OFF</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- RIGHT: Product Info -->
+      <div class="flex flex-col gap-4">
+
+        <!-- Name + rating + SKU -->
         <div>
-          <div class="aspect-square overflow-hidden rounded-lg bg-secondary mb-3 relative" id="main-image-container">
-            {% if product.media %}
-            <img id="main-image" src="{{ product.media.0.url }}" alt="{{ product.name }}"
-                 class="w-full h-full object-cover"
-                 onerror="this.src='https://placehold.co/600x600/f5f0e8/b8a98a?text={{ product.name|urlencode }}'">
-            {% else %}
-            <div class="w-full h-full flex items-center justify-center text-muted-foreground">
-              <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <h1 class="font-serif text-2xl md:text-3xl text-foreground font-semibold leading-snug">{{ product.name }}</h1>
+          <p class="text-xs text-muted-foreground mt-1">SKU: {{ product.id }}</p>
+          {% if review_count > 0 %}
+          <div class="flex items-center gap-2 mt-2">
+            <div class="flex items-center gap-0.5">
+              {% for i in "12345" %}
+              <svg class="h-4 w-4 {% if forloop.counter <= avg_rating %}text-primary fill-current{% else %}text-muted-foreground/30 fill-current{% endif %}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              {% endfor %}
             </div>
+            <span class="text-xs text-muted-foreground">({{ review_count }} Review{{ review_count|pluralize }})</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <hr class="border-border">
+
+        <!-- Price -->
+        <div id="price-section">
+          <div class="flex flex-wrap items-baseline gap-3">
+            {% if product.original_price and product.original_price > 0 %}
+            <p class="text-xl text-muted-foreground line-through" id="original-price-display">₹{{ product.original_price|floatformat:0 }}</p>
+            {% endif %}
+            {% if product.display_price %}
+            <p class="text-3xl font-bold text-foreground" id="price-display">₹{{ product.display_price|floatformat:0 }}</p>
+            {% elif product.manual_price %}
+            <p class="text-3xl font-bold text-foreground" id="price-display">₹{{ product.manual_price|floatformat:0 }}</p>
+            {% else %}
+            <p class="text-xl text-muted-foreground italic" id="price-display">Price on request</p>
             {% endif %}
             {% if product.discount_percentage %}
-            <div class="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">{{ product.discount_percentage|floatformat:0 }}% OFF</div>
+            <span class="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded">{{ product.discount_percentage|floatformat:0 }}% OFF</span>
             {% endif %}
           </div>
-          {% if product.media|length > 1 %}
-          <div class="grid grid-cols-5 gap-2">
-            {% for img in product.media %}
-            <button onclick="document.getElementById('main-image').src='{{ img.url }}'"
-                    class="aspect-square rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-colors">
-              <img src="{{ img.url }}" alt="{{ product.name }}" class="w-full h-full object-cover"
-                   onerror="this.src='https://placehold.co/100x100/f5f0e8/b8a98a?text=img'">
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-muted-foreground">(Incl. of all taxes)</span>
+            <span class="text-muted-foreground text-xs">|</span>
+            <button onclick="document.getElementById('price-breakup').classList.toggle('hidden')"
+                    class="text-xs text-primary hover:underline">View Price Breakup</button>
+          </div>
+          <div id="price-breakup" class="hidden mt-3 bg-secondary rounded-lg p-4 text-sm space-y-2 border border-border">
+            {% if product.price_breakup %}
+            {% if product.price_breakup.metal_value %}<div class="flex justify-between"><span class="text-muted-foreground">Metal Value</span><span id="pb-metal">₹{{ product.price_breakup.metal_value|floatformat:0 }}</span></div>{% endif %}
+            {% if product.price_breakup.making_charge %}<div class="flex justify-between"><span class="text-muted-foreground">Making Charge</span><span id="pb-making">₹{{ product.price_breakup.making_charge|floatformat:0 }}</span></div>{% endif %}
+            {% if product.price_breakup.diamond_value %}<div class="flex justify-between"><span class="text-muted-foreground">Diamond Value</span><span id="pb-diamond">₹{{ product.price_breakup.diamond_value|floatformat:0 }}</span></div>{% endif %}
+            {% if product.price_breakup.gst %}<div class="flex justify-between"><span class="text-muted-foreground">GST</span><span id="pb-gst">₹{{ product.price_breakup.gst|floatformat:0 }}</span></div>{% endif %}
+            <hr class="border-border">
+            <div class="flex justify-between font-semibold"><span>Total</span><span id="pb-total">₹{{ product.display_price|default:product.manual_price|floatformat:0 }}</span></div>
+            {% else %}
+            <p class="text-muted-foreground text-xs">No breakup available.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+          <span class="flex items-center gap-1.5 bg-secondary border border-border rounded-md px-3 py-1.5">
+            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            Free Shipping
+          </span>
+          <span class="flex items-center gap-1.5 bg-secondary border border-border rounded-md px-3 py-1.5">
+            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+            Gifting Available
+          </span>
+          <span class="flex items-center gap-1.5 bg-secondary border border-border rounded-md px-3 py-1.5">
+            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            BIS Certified
+          </span>
+        </div>
+
+        <!-- Ring Size / Variants -->
+        {% if product.variants %}
+        <div>
+          <p class="text-sm font-medium text-foreground mb-2">
+            {% if product.has_ring_size %}Select Ring Size{% else %}Select Variant{% endif %}
+          </p>
+          <div class="flex flex-wrap gap-2" id="variant-container">
+            {% for v in product.variants %}
+            <button onclick="selectVariant(this, '{{ v.label|default:v.id }}', {{ v.display_price|default:product.display_price|default:0 }}, '{{ v.id }}')"
+                    data-price="{{ v.display_price|default:product.display_price|default:0 }}"
+                    data-breakup="{{ v.price_breakup|default:'{}' }}"
+                    class="variant-btn border border-border bg-card rounded-full px-4 py-1.5 text-sm text-foreground hover:border-primary hover:text-primary transition-colors">
+              {{ v.label|default:v.id }}
             </button>
             {% endfor %}
           </div>
-          {% endif %}
-        </div>
-
-        <!-- Info (sticky on desktop) -->
-        <div class="sticky top-28 flex flex-col gap-6">
-
-          <!-- Name + SKU + Rating -->
-          <div>
-            <h1 class="text-2xl lg:text-3xl font-bold font-headline">{{ product.name }}</h1>
-            <div class="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-              <span>SKU: {{ product.id }}</span>
-            </div>
-            {% if review_count > 0 %}
-            <div class="flex items-center gap-2 mt-3">
-              <div class="flex items-center">
-                {% for i in "12345" %}
-                <svg class="h-4 w-4 {% if forloop.counter <= avg_rating %}text-primary fill-current{% else %}text-muted-foreground/30 fill-current{% endif %}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                {% endfor %}
-              </div>
-              <span class="text-xs text-muted-foreground">({{ review_count }} Review{{ review_count|pluralize }})</span>
-            </div>
-            {% endif %}
-          </div>
-
-          <hr class="border-border">
-
-          <!-- Price -->
-          <div>
-            <div class="flex flex-wrap items-baseline gap-3">
-              {% if product.original_price and product.original_price > 0 %}
-              <p class="text-xl text-muted-foreground line-through">₹{{ product.original_price|floatformat:0 }}</p>
-              {% endif %}
-              {% if product.display_price %}
-              <p class="text-3xl font-bold text-foreground">₹{{ product.display_price|floatformat:0 }}</p>
-              {% elif product.manual_price %}
-              <p class="text-3xl font-bold text-foreground">₹{{ product.manual_price|floatformat:0 }}</p>
-              {% else %}
-              <p class="text-lg text-muted-foreground">Price on request</p>
-              {% endif %}
-              {% if product.discount_percentage %}
-              <span class="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">{{ product.discount_percentage|floatformat:0 }}% OFF</span>
-              {% endif %}
-            </div>
-            <span class="text-xs text-muted-foreground">(Incl. of all taxes)</span>
-            <!-- Price Breakup toggle -->
-            {% if product.price_breakup %}
-            <div class="mt-2">
-              <button onclick="document.getElementById('price-breakup').classList.toggle('hidden')"
-                      class="text-sm text-foreground hover:text-primary underline underline-offset-2">View Price Breakup</button>
-              <div id="price-breakup" class="hidden mt-3 bg-secondary/50 rounded-lg p-4 text-sm space-y-2 border border-border">
-                {% if product.price_breakup.metal_value %}<div class="flex justify-between"><span class="text-muted-foreground">Metal Value</span><span>₹{{ product.price_breakup.metal_value|floatformat:0 }}</span></div>{% endif %}
-                {% if product.price_breakup.making_charge %}<div class="flex justify-between"><span class="text-muted-foreground">Making Charge</span><span>₹{{ product.price_breakup.making_charge|floatformat:0 }}</span></div>{% endif %}
-                {% if product.price_breakup.diamond_value %}<div class="flex justify-between"><span class="text-muted-foreground">Diamond Value</span><span>₹{{ product.price_breakup.diamond_value|floatformat:0 }}</span></div>{% endif %}
-                {% if product.price_breakup.gst %}<div class="flex justify-between"><span class="text-muted-foreground">GST</span><span>₹{{ product.price_breakup.gst|floatformat:0 }}</span></div>{% endif %}
-                <hr class="border-border"><div class="flex justify-between font-semibold"><span>Total</span><span>₹{{ product.display_price|default:product.manual_price|floatformat:0 }}</span></div>
-              </div>
-            </div>
-            {% endif %}
-          </div>
-
-          <!-- Variants -->
-          {% if product.variants %}
-          <div>
-            <p class="text-sm font-semibold mb-3">Select Size / Variant</p>
-            <div class="flex flex-wrap gap-2" id="variant-container">
-              {% for v in product.variants %}
-              <button onclick="selectVariant(this, '{{ v.label|default:v.id }}', {{ product.display_price|default:0 }})"
-                      class="variant-btn border border-border rounded-full px-4 py-1.5 text-sm hover:border-primary hover:text-primary transition-colors">
-                {{ v.label|default:v.id }}
-              </button>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
-
-          <!-- Availability -->
-          <div class="flex items-center gap-2">
-            {% if product.availability == 'in_stock' %}
-            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-            <span class="text-sm text-green-600 font-medium">In Stock</span>
-            {% elif product.availability == 'made_to_order' %}
-            <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-            <span class="text-sm text-blue-600 font-medium">Made to Order (2–3 weeks)</span>
-            {% else %}
-            <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
-            <span class="text-sm text-red-600 font-medium">Out of Stock</span>
-            {% endif %}
-          </div>
-
-          <!-- Add to Cart -->
-          <div class="flex gap-3">
-            <div class="flex items-center border border-border rounded-md bg-background">
-              <button onclick="changeQty(-1)" class="px-3 py-2 text-muted-foreground hover:text-primary transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-              </button>
-              <span id="qty-display" class="px-4 text-sm font-semibold min-w-[2rem] text-center">1</span>
-              <button onclick="changeQty(1)" class="px-3 py-2 text-muted-foreground hover:text-primary transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              </button>
-            </div>
-            <button onclick="addToCartFromDetail()"
-                    class="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-md transition-colors">
-              Add to Cart
-            </button>
-          </div>
-
-          <!-- Wishlist + Share -->
-          <div class="flex items-center gap-3">
-            <button onclick="toggleWishlist()" id="wishlist-btn"
-                    class="flex-1 flex items-center justify-center gap-2 border border-border rounded-md py-2.5 text-sm font-medium hover:bg-secondary transition-colors {% if in_wishlist %}text-red-500 border-red-300{% endif %}">
-              <svg class="w-4 h-4" fill="{% if in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-              Wishlist
-            </button>
-            <button onclick="shareProduct()" class="flex-1 flex items-center justify-center gap-2 border border-border rounded-md py-2.5 text-sm font-medium hover:bg-secondary transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-              Share
-            </button>
-          </div>
-
-          <!-- Trust icons -->
-          <div class="grid grid-cols-3 gap-3 text-center text-xs text-muted-foreground border-t border-border pt-4">
-            <div class="flex flex-col items-center gap-1">
-              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              <span>Certified</span>
-            </div>
-            <div class="flex flex-col items-center gap-1">
-              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-              <span>Free Delivery</span>
-            </div>
-            <div class="flex flex-col items-center gap-1">
-              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-              <span>Easy Returns</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabs: Details / More Info / Reviews -->
-    <div class="mb-8">
-      <!-- Tab Nav -->
-      <div class="grid grid-cols-3 bg-secondary/80 rounded-lg p-1 mb-6" role="tablist">
-        <button onclick="showDetailTab(0)" id="dtab-0" role="tab"
-                class="detail-tab-btn py-2 text-sm font-medium rounded-md transition-colors bg-card shadow-sm">
-          Product Details
-        </button>
-        <button onclick="showDetailTab(1)" id="dtab-1" role="tab"
-                class="detail-tab-btn py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground">
-          More Info
-        </button>
-        <button onclick="showDetailTab(2)" id="dtab-2" role="tab"
-                class="detail-tab-btn py-2 text-sm font-medium rounded-md transition-colors text-muted-foreground">
-          Reviews ({{ review_count }})
-        </button>
-      </div>
-
-      <!-- Tab 0: Details -->
-      <div id="dtab-content-0" class="detail-tab-content">
-        <div class="bg-card rounded-lg border border-border p-6 text-sm">
-          {% if product.description %}
-          <div class="text-muted-foreground mb-8 leading-relaxed">{{ product.description }}</div>
-          {% endif %}
-
-          <!-- Metal Details Accordion -->
-          {% if product.metal or product.purity or product.gross_weight %}
-          <div class="border border-border rounded-lg mb-3 overflow-hidden">
-            <button onclick="toggleAccordion('acc-metal')" class="w-full flex items-center justify-between p-4 text-left hover:bg-secondary/50 transition-colors">
-              <div class="flex items-center gap-3">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15l-3-3m0 0l3-3m-3 3h12M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
-                <span class="font-semibold">METAL DETAILS</span>
-              </div>
-              <svg class="w-4 h-4 transition-transform" id="acc-metal-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div id="acc-metal" class="px-4 pb-4 pt-2 grid grid-cols-3 gap-4 text-center">
-              {% if product.purity %}<div><p class="font-bold text-lg">{{ product.purity.label }}</p><p class="text-xs text-muted-foreground">Karatage</p></div>{% endif %}
-              {% if product.metal %}<div><p class="font-bold text-lg">{{ product.metal.name }}</p><p class="text-xs text-muted-foreground">Metal</p></div>{% endif %}
-              {% if product.gross_weight %}<div><p class="font-bold text-lg">{{ product.gross_weight }}g</p><p class="text-xs text-muted-foreground">Gross Weight</p></div>{% endif %}
-              {% if product.net_weight %}<div><p class="font-bold text-lg">{{ product.net_weight }}g</p><p class="text-xs text-muted-foreground">Net Weight</p></div>{% endif %}
-              {% if product.height %}<div><p class="font-bold text-lg">{{ product.height }} cm</p><p class="text-xs text-muted-foreground">Height</p></div>{% endif %}
-              {% if product.width %}<div><p class="font-bold text-lg">{{ product.width }} cm</p><p class="text-xs text-muted-foreground">Width</p></div>{% endif %}
-            </div>
-          </div>
-          {% endif %}
-
-          <!-- Diamond Details Accordion -->
-          {% if product.has_diamonds and product.diamond_details %}
-          <div class="border border-border rounded-lg mb-3 overflow-hidden">
-            <button onclick="toggleAccordion('acc-diamond')" class="w-full flex items-center justify-between p-4 text-left hover:bg-secondary/50 transition-colors">
-              <div class="flex items-center gap-3">
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                <span class="font-semibold">DIAMOND DETAILS</span>
-              </div>
-              <svg class="w-4 h-4 transition-transform" id="acc-diamond-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div id="acc-diamond" class="hidden px-4 pb-4 pt-2">
-              {% for diamond in product.diamond_details %}
-              <div class="grid grid-cols-3 gap-4 text-center mb-4">
-                <div><p class="font-bold text-lg">{{ diamond.count }}</p><p class="text-xs text-muted-foreground">Count</p></div>
-                <div><p class="font-bold text-lg">{{ diamond.weight }} ct</p><p class="text-xs text-muted-foreground">Total Weight</p></div>
-                <div><p class="font-bold text-lg">{{ diamond.clarity|default:'N/A' }}-{{ diamond.color|default:'N/A' }}</p><p class="text-xs text-muted-foreground">Clarity-Color</p></div>
-                <div><p class="font-bold text-lg">{{ diamond.cut|default:'N/A' }}</p><p class="text-xs text-muted-foreground">Cut</p></div>
-                <div><p class="font-bold text-lg">{{ diamond.diamond_type|default:'N/A' }}</p><p class="text-xs text-muted-foreground">Type</p></div>
-                {% if diamond.price %}<div><p class="font-bold text-lg">₹{{ diamond.price|floatformat:0 }}</p><p class="text-xs text-muted-foreground">Approx. Value</p></div>{% endif %}
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Tab 1: More Info -->
-      <div id="dtab-content-1" class="detail-tab-content hidden">
-        <div class="bg-card rounded-lg border border-border p-6 text-sm space-y-4 text-muted-foreground">
-          <p>All our jewellery is handcrafted and requires a delivery time of 2–3 weeks. We offer a 15-day money-back policy, so you can shop with confidence.</p>
-          <p>For any inquiries, please <a href="{% url 'store:contact' %}" class="text-primary underline">contact our customer service team</a>.</p>
-        </div>
-      </div>
-
-      <!-- Tab 2: Reviews -->
-      <div id="dtab-content-2" class="detail-tab-content hidden space-y-8">
-        <!-- Review Form -->
-        <div class="bg-card rounded-lg border border-border p-6">
-          <h3 class="font-semibold mb-4">Write a Review</h3>
-          <form method="post" action="{% url 'store:submit_review' product.id %}">
-            {% csrf_token %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <input type="text" name="name" placeholder="Your name" required
-                     class="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
-              <select name="rating" class="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
-                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                <option value="4">⭐⭐⭐⭐ Very Good</option>
-                <option value="3">⭐⭐⭐ Good</option>
-                <option value="2">⭐⭐ Fair</option>
-                <option value="1">⭐ Poor</option>
-              </select>
-            </div>
-            <textarea name="text" rows="3" placeholder="Share your experience..." required
-                      class="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary mb-4"></textarea>
-            <button type="submit" class="bg-primary text-primary-foreground px-6 py-2 rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors">Submit Review</button>
-          </form>
-        </div>
-
-        <!-- Reviews List -->
-        {% if reviews %}
-        <div class="bg-card rounded-lg border border-border p-6 space-y-8">
-          {% for review in reviews %}
-          <div class="flex gap-4">
-            <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-semibold text-foreground flex-shrink-0">{{ review.reviewer_name|slice:":1" }}</div>
-            <div class="flex-1">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <p class="font-semibold">{{ review.reviewer_name }}</p>
-                <div class="flex items-center gap-0.5">
-                  {% for i in "12345" %}
-                  <svg class="h-4 w-4 {% if forloop.counter <= review.rating %}text-primary fill-current{% else %}text-muted-foreground/30 fill-current{% endif %}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  {% endfor %}
-                </div>
-              </div>
-              <p class="text-xs text-muted-foreground mt-0.5">{{ review.created_at|date:"F j, Y" }}</p>
-              <p class="mt-2 text-foreground/80">{{ review.text }}</p>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="text-center py-12 border border-border rounded-lg bg-card">
-          <svg class="mx-auto h-12 w-12 text-muted-foreground mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-          <h3 class="text-lg font-semibold">No Reviews Yet</h3>
-          <p class="text-sm text-muted-foreground mt-1">Be the first to share your thoughts.</p>
         </div>
         {% endif %}
-      </div>
-    </div>
 
-    <!-- Feature Tabs (if any) -->
+        <!-- Customization: Metal & Purity -->
+        {% if all_metals %}
+        <div class="border border-border rounded-lg bg-card overflow-hidden">
+          <button onclick="toggleSection('custom-panel')" class="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors text-left">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              <span class="text-sm font-medium text-foreground">Customise</span>
+            </div>
+            <svg id="custom-panel-icon" class="w-4 h-4 text-muted-foreground transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="custom-panel" class="px-4 pb-4 border-t border-border">
+            <p class="text-xs text-muted-foreground mt-3 mb-3">Choose a different metal or purity. Price updates automatically.</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-foreground mb-1.5">Metal</label>
+                <select id="custom-metal" onchange="recalcCustomPrice()"
+                        class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
+                  {% for metal in all_metals %}
+                  <option value="{{ metal.id }}" data-price="{{ metal.price_per_gram }}"
+                          {% if metal.id == product.metal_id %}selected{% endif %}>
+                    {{ metal.name }} — ₹{{ metal.price_per_gram }}/g
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-foreground mb-1.5">Purity</label>
+                <select id="custom-purity" onchange="recalcCustomPrice()"
+                        class="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
+                  {% for purity in all_purities %}
+                  {% if purity.metal_id == product.metal_id %}
+                  <option value="{{ purity.id }}" data-fineness="{{ purity.fineness }}"
+                          {% if purity.id == product.purity_id %}selected{% endif %}>
+                    {{ purity.label }} ({{ purity.fineness|floatformat:3 }})
+                  </option>
+                  {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div id="custom-price-preview" class="hidden mt-3 p-3 bg-secondary rounded-lg text-sm text-foreground">
+              Estimated price: <strong id="custom-price-val" class="text-primary"></strong>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Availability -->
+        <div class="flex items-center gap-2">
+          {% if product.availability == 'in_stock' %}
+          <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+          <span class="text-sm text-green-700 font-medium">In Stock</span>
+          {% elif product.availability == 'made_to_order' %}
+          <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+          <span class="text-sm text-blue-700 font-medium">Made to Order (2–3 weeks)</span>
+          {% else %}
+          <span class="w-2 h-2 rounded-full bg-destructive inline-block"></span>
+          <span class="text-sm text-destructive font-medium">Out of Stock</span>
+          {% endif %}
+        </div>
+
+        <!-- Qty + Add to Cart -->
+        <div class="flex gap-3">
+          <div class="flex items-center border border-border rounded-md bg-card">
+            <button onclick="changeQty(-1)" class="px-3 py-2.5 text-muted-foreground hover:text-primary transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+            </button>
+            <span id="qty-display" class="px-4 text-sm font-semibold min-w-[2rem] text-center">1</span>
+            <button onclick="changeQty(1)" class="px-3 py-2.5 text-muted-foreground hover:text-primary transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </button>
+          </div>
+          <button onclick="addToCartFromDetail()"
+                  class="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-md transition-colors text-sm">
+            Add to Cart
+          </button>
+        </div>
+
+        <!-- Wishlist + Compare + Share -->
+        <div class="flex items-center gap-2">
+          <button onclick="toggleWishlist()" id="wishlist-btn"
+                  class="flex-1 flex items-center justify-center gap-2 border border-border bg-card rounded-md py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors {% if in_wishlist %}text-destructive border-destructive/40{% endif %}">
+            <svg class="w-4 h-4" fill="{% if in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            Add to Wishlist
+          </button>
+          <button onclick="addToCompare('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.media.0.url|default:"" }}', {{ product.display_price|default:product.manual_price|default:0 }})"
+                  id="compare-btn"
+                  class="flex items-center justify-center gap-2 border border-border bg-card rounded-md py-2.5 px-4 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Compare
+          </button>
+          <button onclick="shareProduct()" class="flex items-center justify-center gap-2 border border-border bg-card rounded-md py-2.5 px-4 text-sm text-foreground hover:bg-secondary hover:text-primary transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            Share
+          </button>
+        </div>
+
+        <!-- Product specs -->
+        {% if product.metal or product.gross_weight %}
+        <div class="border border-border rounded-md bg-card overflow-hidden">
+          <button onclick="toggleSection('acc-metal')" class="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors text-left">
+            <span class="text-sm font-semibold text-foreground tracking-wide">Product Details</span>
+            <svg id="acc-metal-icon" class="w-4 h-4 text-muted-foreground transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="acc-metal" class="hidden px-4 pb-4 border-t border-border">
+            <div class="grid grid-cols-3 gap-4 text-center pt-4 text-sm">
+              {% if product.gross_weight %}<div><p class="font-bold text-foreground">{{ product.gross_weight }}g</p><p class="text-xs text-muted-foreground mt-0.5">Gross Wt.</p></div>{% endif %}
+              {% if product.net_weight %}<div><p class="font-bold text-foreground">{{ product.net_weight }}g</p><p class="text-xs text-muted-foreground mt-0.5">Net Wt.</p></div>{% endif %}
+              {% if product.metal %}<div><p class="font-bold text-foreground">{{ product.metal.name }}</p><p class="text-xs text-muted-foreground mt-0.5">Metal</p></div>{% endif %}
+              {% if product.purity %}<div><p class="font-bold text-foreground">{{ product.purity.label }}</p><p class="text-xs text-muted-foreground mt-0.5">Purity</p></div>{% endif %}
+              {% if product.height %}<div><p class="font-bold text-foreground">{{ product.height }} cm</p><p class="text-xs text-muted-foreground mt-0.5">Height</p></div>{% endif %}
+              {% if product.width %}<div><p class="font-bold text-foreground">{{ product.width }} cm</p><p class="text-xs text-muted-foreground mt-0.5">Width</p></div>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Diamond specs -->
+        {% if product.has_diamonds and product.diamond_details %}
+        <div class="border border-border rounded-md bg-card overflow-hidden">
+          <button onclick="toggleSection('acc-diamond')" class="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors text-left">
+            <span class="text-sm font-semibold text-foreground tracking-wide">Diamond Details</span>
+            <svg id="acc-diamond-icon" class="w-4 h-4 text-muted-foreground transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="acc-diamond" class="hidden px-4 pb-4 border-t border-border">
+            {% for d in product.diamond_details %}
+            <div class="grid grid-cols-3 gap-4 text-center pt-4 text-sm">
+              {% if d.count %}<div><p class="font-bold text-foreground">{{ d.count }}</p><p class="text-xs text-muted-foreground mt-0.5">Count</p></div>{% endif %}
+              {% if d.weight %}<div><p class="font-bold text-foreground">{{ d.weight }} ct</p><p class="text-xs text-muted-foreground mt-0.5">Weight</p></div>{% endif %}
+              {% if d.cut %}<div><p class="font-bold text-foreground">{{ d.cut }}</p><p class="text-xs text-muted-foreground mt-0.5">Cut</p></div>{% endif %}
+              {% if d.color %}<div><p class="font-bold text-foreground">{{ d.color }}</p><p class="text-xs text-muted-foreground mt-0.5">Color</p></div>{% endif %}
+              {% if d.clarity %}<div><p class="font-bold text-foreground">{{ d.clarity }}</p><p class="text-xs text-muted-foreground mt-0.5">Clarity</p></div>{% endif %}
+              {% if d.diamond_type %}<div><p class="font-bold text-foreground">{{ d.diamond_type }}</p><p class="text-xs text-muted-foreground mt-0.5">Type</p></div>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Certificates -->
+        {% if product.certificates %}
+        <div class="flex items-center gap-2 flex-wrap">
+          {% for cert in product.certificates %}
+          <a href="{{ cert.file_url }}" target="_blank"
+             class="flex items-center gap-2 border border-border bg-card rounded-md px-3 py-2 text-xs text-foreground hover:bg-secondary hover:text-primary transition-colors">
+            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            {{ cert.description|default:"Certificate" }}
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      </div><!-- end right -->
+    </div><!-- end main grid -->
+
+    <!-- Feature Tabs -->
     {% if product.feature_tabs %}
-    <div class="mb-8">
-      <div class="flex border-b border-border mb-6 gap-1" id="ftab-nav">
-        {% for tab in product.feature_tabs %}
-        <button onclick="showFtab({{ forloop.counter0 }})"
-                class="ftab-btn text-sm font-medium pb-3 px-4 border-b-2 {% if forloop.first %}border-primary text-primary{% else %}border-transparent text-muted-foreground hover:text-foreground{% endif %} transition-colors">
-          {{ tab.tabTitle }}
-        </button>
-        {% endfor %}
+    <div class="mb-12">
+      <div class="flex justify-center mb-6">
+        <div class="inline-flex rounded-lg p-1 bg-secondary border border-border gap-1">
+          {% for tab in product.feature_tabs %}
+          <button onclick="showFtab({{ forloop.counter0 }})"
+                  class="ftab-btn px-5 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap
+                         {% if forloop.first %}bg-card text-foreground shadow-sm{% else %}text-muted-foreground hover:text-foreground{% endif %}">
+            {{ tab.tabTitle }}
+          </button>
+          {% endfor %}
+        </div>
       </div>
       {% for tab in product.feature_tabs %}
-      <div class="ftab-content {% if not forloop.first %}hidden{% endif %}">
-        <div class="bg-card rounded-lg border border-border overflow-hidden">
-          <div class="grid md:grid-cols-2 items-center">
-            <div class="p-8 md:p-12">
-              <h3 class="text-2xl font-headline font-bold mb-4">{{ tab.contentTitle }}</h3>
-              <ul class="space-y-3 text-muted-foreground">
-                {% for point in tab.points %}
-                <li class="flex items-start gap-3">
-                  <svg class="w-5 h-5 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span>{{ point }}</span>
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-            {% if tab.imageUrl %}
-            <div class="aspect-square relative">
-              <img src="{{ tab.imageUrl }}" alt="{{ tab.contentTitle }}" class="w-full h-full object-cover">
-            </div>
-            {% endif %}
+      <div class="ftab-content {% if not forloop.first %}hidden{% endif %} bg-card rounded-lg border border-border overflow-hidden">
+        <div class="grid md:grid-cols-2 items-center">
+          <div class="p-8 md:p-12">
+            <h3 class="text-xl font-semibold text-foreground mb-5">{{ tab.contentTitle }}</h3>
+            <ul class="space-y-3">
+              {% for point in tab.points %}
+              <li class="flex items-start gap-3 text-muted-foreground text-sm leading-relaxed">
+                <svg class="w-5 h-5 text-green-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>{{ point }}</span>
+              </li>
+              {% endfor %}
+            </ul>
           </div>
+          {% if tab.imageUrl %}
+          <div class="flex items-center justify-center p-8 bg-secondary" style="min-height:280px">
+            <img src="{{ tab.imageUrl }}" alt="{{ tab.contentTitle }}" class="max-h-64 w-auto object-contain drop-shadow-md"
+                 onerror="this.src='https://placehold.co/400x400/f5f0e8/b8a98a?text=Jewellery'">
+          </div>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
-    <!-- You May Also Like -->
-    {% if cross_sell_products %}
-    <section>
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold font-headline">You Might Also Like</h2>
-        <a href="{% url 'store:shop' %}" class="border border-border text-foreground hover:bg-secondary px-4 py-2 rounded-md text-sm font-medium transition-colors">View All</a>
+    <!-- Reviews -->
+    <div class="mb-12 bg-card rounded-lg border border-border p-6 md:p-8">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold text-foreground">Reviews ({{ review_count }})</h3>
+        <button onclick="document.getElementById('review-form').classList.toggle('hidden')"
+                class="text-sm text-primary hover:underline">Write a Review</button>
       </div>
-      <div class="relative">
-        <div class="carousel-wrap">
-          <div class="carousel-track gap-4" id="cross-sell-track">
-            {% for product in cross_sell_products %}
-            <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
-              {% include 'partials/product_card.html' %}
+      <div id="review-form" class="hidden mb-6 pb-6 border-b border-border">
+        <form method="post" action="{% url 'store:submit_review' product.id %}">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input type="text" name="name" placeholder="Your name" required
+                   class="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
+            <select name="rating" class="border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary">
+              <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+              <option value="4">⭐⭐⭐⭐ Very Good</option>
+              <option value="3">⭐⭐⭐ Good</option>
+              <option value="2">⭐⭐ Fair</option>
+              <option value="1">⭐ Poor</option>
+            </select>
+          </div>
+          <textarea name="text" rows="3" placeholder="Share your experience..." required
+                    class="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-1 focus:ring-primary mb-4"></textarea>
+          <button type="submit" class="bg-primary text-primary-foreground px-6 py-2 rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors">Submit Review</button>
+        </form>
+      </div>
+      {% if reviews %}
+      <div class="space-y-6">
+        {% for review in reviews %}
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center font-semibold text-foreground flex-shrink-0">{{ review.reviewer_name|slice:":1" }}</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 flex-wrap">
+              <p class="font-semibold text-sm text-foreground">{{ review.reviewer_name }}</p>
+              <div class="flex gap-0.5">{% for i in "12345" %}<svg class="h-3.5 w-3.5 {% if forloop.counter <= review.rating %}text-primary fill-current{% else %}text-muted-foreground/30 fill-current{% endif %}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{% endfor %}</div>
+              <span class="text-xs text-muted-foreground">{{ review.created_at|date:"d M Y" }}</span>
             </div>
-            {% endfor %}
+            <p class="mt-1 text-sm text-foreground/80">{{ review.text }}</p>
           </div>
         </div>
-        <button onclick="carouselSlide('cross-sell-track', -1)" class="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-secondary rounded-full w-10 h-10 items-center justify-center shadow-md border border-border transition-colors">
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-center text-muted-foreground text-sm py-6">No reviews yet. Be the first!</p>
+      {% endif %}
+    </div>
+
+    <!-- You May Also Like -->
+    {% if upsell_products or cross_sell_products %}
+    <div class="mb-12">
+      <h2 class="text-xl font-serif text-foreground mb-6">You Might Also Like</h2>
+      <div class="relative overflow-hidden" id="cross-wrap">
+        <div class="flex gap-4 transition-transform duration-500" id="cross-track">
+          {% for p in upsell_products %}
+          <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
+            {% with product=p %}{% include 'partials/product_card.html' %}{% endwith %}
+          </div>
+          {% endfor %}
+          {% for p in cross_sell_products %}
+          <div class="flex-shrink-0 w-[calc(50%-8px)] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
+            {% with product=p %}{% include 'partials/product_card.html' %}{% endwith %}
+          </div>
+          {% endfor %}
+        </div>
+        <button onclick="carouselSlide('cross-track','cross-wrap',-1)" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-card border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
-        <button onclick="carouselSlide('cross-sell-track', 1)" class="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-secondary rounded-full w-10 h-10 items-center justify-center shadow-md border border-border transition-colors">
+        <button onclick="carouselSlide('cross-track','cross-wrap',1)" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-card border border-border shadow items-center justify-center hover:bg-secondary transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
-    </section>
+    </div>
     {% endif %}
 
   </div>
 </div>
+
+<!-- Compare Bar (fixed bottom) -->
+<div id="compare-bar" class="hidden fixed bottom-0 left-0 right-0 z-[300] bg-card border-t border-border shadow-2xl">
+  <div class="container mx-auto px-6 py-3 flex items-center gap-4">
+    <span class="text-sm font-medium text-foreground flex-shrink-0">Compare:</span>
+    <div class="flex items-center gap-3 flex-1 overflow-x-auto" id="compare-items"></div>
+    <a id="compare-link" href="/compare/" class="flex-shrink-0 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors">Compare Now</a>
+    <button onclick="clearCompare()" class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors text-sm">Clear</button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+// Product data
 let selectedQty = 1;
 let selectedVariant = null;
 let selectedPrice = {{ product.display_price|default:product.manual_price|default:0 }};
 const productId = '{{ product.id }}';
 const isLoggedIn = {{ user.is_authenticated|yesno:'true,false' }};
 let inWishlist = {{ in_wishlist|yesno:'true,false' }};
+const productNetWeight = {{ product.net_weight|default:0 }};
+const productMakingChargeType = '{{ product.making_charge_type }}';
+const productMakingChargeValue = {{ product.making_charge_value|default:0 }};
+const ALL_METALS = {{ all_metals_json|safe }};
+const ALL_PURITIES = {{ all_purities_json|safe }};
 
+// Gallery
+function setMainImage(url, btn) {
+  document.getElementById('main-product-image').src = url;
+  document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('border-primary'));
+  btn.classList.add('border-primary');
+}
+
+// Qty
 function changeQty(delta) {
   selectedQty = Math.max(1, selectedQty + delta);
   document.getElementById('qty-display').textContent = selectedQty;
 }
 
-function selectVariant(btn, name, price) {
-  document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('border-primary', 'text-primary', 'bg-secondary'));
-  btn.classList.add('border-primary', 'text-primary', 'bg-secondary');
+// Variant selector with per-variant pricing
+function selectVariant(btn, name, price, variantId) {
+  document.querySelectorAll('.variant-btn').forEach(b => {
+    b.classList.remove('border-primary','text-primary','bg-secondary');
+  });
+  btn.classList.add('border-primary','text-primary','bg-secondary');
   selectedVariant = name;
-  if (price) selectedPrice = price;
-}
 
-function addToCartFromDetail() {
-  fetch("{% url 'store:cart_add' %}", {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-    body: JSON.stringify({product_id: productId, quantity: selectedQty, variant: selectedVariant, price: selectedPrice})
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) { updateCartBadge(data.cart_count); showToast('Added to cart!'); }
-  });
-}
-
-function toggleWishlist() {
-  if (!isLoggedIn) { window.location.href = "{% url 'accounts:login' %}"; return; }
-  fetch("{% url 'store:wishlist_toggle' %}", {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-    body: JSON.stringify({product_id: productId})
-  })
-  .then(r => r.json())
-  .then(data => {
-    inWishlist = data.in_wishlist;
-    const btn = document.getElementById('wishlist-btn');
-    const svg = btn.querySelector('svg');
-    svg.setAttribute('fill', inWishlist ? 'currentColor' : 'none');
-    btn.classList.toggle('text-red-500', inWishlist);
-    btn.classList.toggle('border-red-300', inWishlist);
-    showToast(inWishlist ? 'Added to wishlist!' : 'Removed from wishlist');
-  });
-}
-
-function shareProduct() {
-  if (navigator.share) {
-    navigator.share({title: '{{ product.name }}', url: window.location.href});
-  } else {
-    navigator.clipboard.writeText(window.location.href);
-    showToast('Link copied!');
+  // Update price from variant data
+  const rawBreakup = btn.dataset.breakup;
+  if (price && price > 0) {
+    selectedPrice = price;
+    document.getElementById('price-display').textContent = '₹' + price.toLocaleString('en-IN');
+    // Update price breakup if available
+    if (rawBreakup && rawBreakup !== '{}') {
+      try {
+        const bp = JSON.parse(rawBreakup.replace(/&quot;/g,'"'));
+        if (bp.metal_value && document.getElementById('pb-metal')) document.getElementById('pb-metal').textContent = '₹' + bp.metal_value.toLocaleString('en-IN');
+        if (bp.making_charge && document.getElementById('pb-making')) document.getElementById('pb-making').textContent = '₹' + bp.making_charge.toLocaleString('en-IN');
+        if (bp.diamond_value && document.getElementById('pb-diamond')) document.getElementById('pb-diamond').textContent = '₹' + bp.diamond_value.toLocaleString('en-IN');
+        if (bp.gst && document.getElementById('pb-gst')) document.getElementById('pb-gst').textContent = '₹' + bp.gst.toLocaleString('en-IN');
+        if (bp.total && document.getElementById('pb-total')) document.getElementById('pb-total').textContent = '₹' + bp.total.toLocaleString('en-IN');
+      } catch(e){}
+    }
   }
 }
 
-function toggleWishlistCard(e, productId) { e.preventDefault(); e.stopPropagation(); }
+// Customisation: live price recalculator
+function recalcCustomPrice() {
+  const metalSel = document.getElementById('custom-metal');
+  const puritySel = document.getElementById('custom-purity');
+  if (!metalSel || !puritySel) return;
 
-// Detail tabs
-const detailTabBtns = document.querySelectorAll('.detail-tab-btn');
-const detailTabContents = document.querySelectorAll('.detail-tab-content');
-function showDetailTab(idx) {
-  detailTabBtns.forEach((b, i) => {
-    if (i === idx) { b.classList.add('bg-card', 'shadow-sm'); b.classList.remove('text-muted-foreground'); }
-    else { b.classList.remove('bg-card', 'shadow-sm'); b.classList.add('text-muted-foreground'); }
+  const metalId = metalSel.value;
+  const metalPricePerGram = parseFloat(metalSel.options[metalSel.selectedIndex].dataset.price) || 0;
+  const fineness = parseFloat(puritySel.options[puritySel.selectedIndex].dataset.fineness) || 0;
+
+  if (!metalPricePerGram || !fineness || !productNetWeight) return;
+
+  const metalValue = metalPricePerGram * fineness * productNetWeight;
+  let makingCharge = 0;
+  if (productMakingChargeType === 'fixed') makingCharge = productMakingChargeValue;
+  else makingCharge = metalValue * (productMakingChargeValue / 100);
+
+  const subtotal = metalValue + makingCharge;
+  const gst = subtotal * 0.03; // default 3% GST
+  const total = Math.round(subtotal + gst);
+
+  document.getElementById('custom-price-val').textContent = '₹' + total.toLocaleString('en-IN');
+  document.getElementById('custom-price-preview').classList.remove('hidden');
+
+  // Update purity dropdown based on metal selection
+  puritySel.innerHTML = '';
+  ALL_PURITIES.filter(p => p.metal_id === metalId).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.dataset.fineness = p.fineness;
+    opt.textContent = p.label + ' (' + p.fineness + ')';
+    puritySel.appendChild(opt);
   });
-  detailTabContents.forEach((c, i) => c.classList.toggle('hidden', i !== idx));
+  // Trigger recalc again after rebuilding
+}
+
+document.getElementById('custom-metal')?.addEventListener('change', function() {
+  recalcCustomPrice();
+  recalcCustomPrice(); // run twice to update purities then recalc
+});
+
+// Sections toggle
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  el.classList.toggle('hidden');
+  if (icon) icon.classList.toggle('rotate-180', !el.classList.contains('hidden'));
 }
 
 // Feature tabs
 const ftabBtns = document.querySelectorAll('.ftab-btn');
 const ftabContents = document.querySelectorAll('.ftab-content');
 function showFtab(idx) {
-  ftabBtns.forEach((b, i) => {
-    b.classList.toggle('border-primary', i === idx);
-    b.classList.toggle('text-primary', i === idx);
-    b.classList.toggle('border-transparent', i !== idx);
+  ftabBtns.forEach((b,i) => {
+    if (i===idx) { b.classList.add('bg-card','text-foreground','shadow-sm'); b.classList.remove('text-muted-foreground'); }
+    else { b.classList.remove('bg-card','text-foreground','shadow-sm'); b.classList.add('text-muted-foreground'); }
   });
-  ftabContents.forEach((c, i) => c.classList.toggle('hidden', i !== idx));
+  ftabContents.forEach((c,i) => c.classList.toggle('hidden', i!==idx));
 }
 
-// Accordions
-function toggleAccordion(id) {
-  const el = document.getElementById(id);
-  const icon = document.getElementById(id + '-icon');
-  el.classList.toggle('hidden');
-  if (icon) icon.style.transform = el.classList.contains('hidden') ? '' : 'rotate(180deg)';
+// Cart
+function addToCartFromDetail() {
+  fetch("{% url 'store:cart_add' %}", {
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({product_id:productId,quantity:selectedQty,variant:selectedVariant,price:selectedPrice})
+  }).then(r=>r.json()).then(d=>{if(d.success){updateCartBadge(d.cart_count);showToast('Added to cart!');}});
 }
 
-// Cross-sell carousel
-function carouselSlide(trackId, dir) {
-  const track = document.getElementById(trackId);
-  if (!track) return;
-  const item = track.querySelector(':scope > div');
-  if (!item) return;
-  const itemWidth = item.offsetWidth + 16;
-  const maxScroll = track.scrollWidth - track.parentElement.offsetWidth;
-  const current = parseInt(track.dataset.offset || '0');
-  let next = Math.max(0, Math.min(current + dir * itemWidth * 2, maxScroll));
-  track.dataset.offset = next;
-  track.style.transform = `translateX(-${next}px)`;
+// Wishlist
+function toggleWishlist() {
+  if(!isLoggedIn){window.location.href="{% url 'accounts:login' %}";return;}
+  fetch("{% url 'store:wishlist_toggle' %}",{
+    method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({product_id:productId})
+  }).then(r=>r.json()).then(d=>{
+    inWishlist=d.in_wishlist;
+    const btn=document.getElementById('wishlist-btn');
+    btn.querySelector('svg').setAttribute('fill',inWishlist?'currentColor':'none');
+    btn.classList.toggle('text-destructive',inWishlist);
+    showToast(inWishlist?'Added to wishlist!':'Removed from wishlist');
+  });
 }
 
-function addToCart(pid, price) { addToCartFromDetail(); }
+// Share
+function shareProduct() {
+  if(navigator.share) navigator.share({title:'{{ product.name|escapejs }}',url:window.location.href});
+  else { navigator.clipboard.writeText(window.location.href); showToast('Link copied!'); }
+}
+
+// Compare (localStorage)
+function addToCompare(id, name, imageUrl, price) {
+  let list = JSON.parse(localStorage.getItem('compareList') || '[]');
+  if (list.find(p => p.id === id)) { showToast('Already in compare list'); return; }
+  if (list.length >= 3) { showToast('Max 3 products to compare'); return; }
+  list.push({id, name, imageUrl, price, url: window.location.href});
+  localStorage.setItem('compareList', JSON.stringify(list));
+  showToast('Added to compare!');
+  renderCompareBar();
+}
+
+function removeFromCompare(id) {
+  let list = JSON.parse(localStorage.getItem('compareList') || '[]');
+  list = list.filter(p => p.id !== id);
+  localStorage.setItem('compareList', JSON.stringify(list));
+  renderCompareBar();
+}
+
+function clearCompare() {
+  localStorage.removeItem('compareList');
+  renderCompareBar();
+}
+
+function renderCompareBar() {
+  const list = JSON.parse(localStorage.getItem('compareList') || '[]');
+  const bar = document.getElementById('compare-bar');
+  const items = document.getElementById('compare-items');
+  if (!list.length) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  items.innerHTML = list.map(p => `
+    <div class="flex items-center gap-2 bg-secondary rounded-md px-3 py-1.5 flex-shrink-0">
+      ${p.imageUrl ? `<img src="${p.imageUrl}" class="w-8 h-8 rounded object-cover">` : ''}
+      <span class="text-xs font-medium text-foreground max-w-[100px] truncate">${p.name}</span>
+      <button onclick="removeFromCompare('${p.id}')" class="text-muted-foreground hover:text-destructive ml-1 text-xs">✕</button>
+    </div>
+  `).join('');
+}
+
+// Carousel
+function carouselSlide(trackId, wrapId, dir) {
+  const track=document.getElementById(trackId),wrap=document.getElementById(wrapId);
+  if(!track||!wrap)return;
+  const item=track.querySelector(':scope > div');if(!item)return;
+  const w=item.offsetWidth+16,max=track.scrollWidth-wrap.offsetWidth;
+  const cur=parseInt(track.dataset.offset||'0');
+  let next=Math.max(0,Math.min(cur+dir*w*2,max));
+  track.dataset.offset=next;track.style.transform=`translateX(-${next}px)`;
+}
+
+// Init
+renderCompareBar();
+
+// Mark current product in compare bar if already added
+(function(){
+  const list = JSON.parse(localStorage.getItem('compareList') || '[]');
+  if (list.find(p => p.id === productId)) {
+    const btn = document.getElementById('compare-btn');
+    if (btn) { btn.classList.add('border-primary','text-primary','bg-secondary'); }
+  }
+})();
+
+function addToCart(pid,price){addToCartFromDetail();}
+function toggleWishlistCard(e,pid){e.preventDefault();e.stopPropagation();}
 </script>
 {% endblock %}

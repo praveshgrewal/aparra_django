@@ -125,6 +125,8 @@ def shop(request):
 
 
 def product_detail(request, product_id):
+    from store.models import Metal, Purity, DiamondSeries
+    import json
     product = get_object_or_404(Product, id=product_id, is_active=True)
     theme_settings = get_theme_settings()
     reviews = product.reviews.filter(status='approved')
@@ -133,6 +135,9 @@ def product_detail(request, product_id):
     cross_sell = Product.objects.filter(id__in=product.cross_sell_products, is_active=True)
     upsell = Product.objects.filter(id__in=product.upsell_products, is_active=True)
     primary_category = product.categories.first()
+    all_metals = Metal.objects.filter(is_active=True)
+    all_purities = Purity.objects.filter(is_active=True).select_related('metal')
+    diamond_series = DiamondSeries.objects.filter(is_active=True)
 
     in_wishlist = False
     if request.user.is_authenticated:
@@ -153,6 +158,11 @@ def product_detail(request, product_id):
         'theme_settings': theme_settings,
         'in_wishlist': in_wishlist,
         'footer_content': get_footer_content(),
+        'all_metals': all_metals,
+        'all_purities': all_purities,
+        'diamond_series': diamond_series,
+        'all_purities_json': json.dumps([{'id': p.id, 'label': p.label, 'fineness': p.fineness, 'metal_id': p.metal_id} for p in all_purities]),
+        'all_metals_json': json.dumps([{'id': m.id, 'name': m.name, 'price_per_gram': m.price_per_gram} for m in all_metals]),
     }
     return render(request, 'store/product_detail.html', context)
 
