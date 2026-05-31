@@ -69,6 +69,25 @@
     </div>
   </div>
 
+  <!-- Blocked Pin Codes -->
+  <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+    <div>
+      <h2 class="font-semibold text-gray-800">Blocked Pin Codes</h2>
+      <p class="text-xs text-gray-400 mt-0.5">Customers in these pin codes will see "Delivery not available" on the product page.</p>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-500 mb-1.5">Pin Codes (one per line or comma-separated)</label>
+      <textarea name="blocked_pincodes_raw" rows="5" placeholder="e.g.&#10;110001&#10;400001&#10;560001"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400/50">{{ shipping.blocked_pincodes|join:"\n" }}</textarea>
+    </div>
+    <div id="pincode-tags" class="flex flex-wrap gap-1.5 min-h-[1.5rem]">
+      {% for pin in shipping.blocked_pincodes %}
+      <span class="bg-red-100 text-red-700 text-xs font-mono px-2 py-0.5 rounded">{{ pin }}</span>
+      {% endfor %}
+    </div>
+    <p class="text-xs text-gray-400">{{ shipping.blocked_pincodes|length }} pin code{{ shipping.blocked_pincodes|length|pluralize }} blocked</p>
+  </div>
+
   <!-- Delivery note -->
   <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
     <label class="block text-xs font-semibold text-gray-500 mb-1.5">Delivery Information Note (shown at checkout)</label>

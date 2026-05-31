@@ -8,7 +8,7 @@
           {{ product.discount_percentage|floatformat:0 }}% OFF
         </div>
         {% endif %}
-        {% with primary=product.media.first %}
+        {% with primary=product.media.0 %}
         {% if primary %}
         <img src="{{ primary.url }}"
              alt="{{ product.name }}"
@@ -37,15 +37,11 @@
         <p class="text-sm text-muted-foreground mt-1">{{ product.seo_title }}</p>
         {% endif %}
         <div class="mt-2 flex flex-wrap items-baseline gap-2">
-          {% if product.original_price and product.original_price > 0 %}
-          <p class="text-sm text-muted-foreground line-through">
-            ₹{{ product.original_price|floatformat:0 }}
-          </p>
+          {% if product.price_before_discount %}
+          <p class="text-sm text-muted-foreground line-through">₹{{ product.price_before_discount|floatformat:0 }}</p>
           {% endif %}
-          {% if product.display_price %}
-          <p class="font-bold text-xl text-primary">₹{{ product.display_price|floatformat:0 }}</p>
-          {% elif product.manual_price %}
-          <p class="font-bold text-xl text-primary">₹{{ product.manual_price|floatformat:0 }}</p>
+          {% if product.price_after_discount %}
+          <p class="font-bold text-xl text-primary">₹{{ product.price_after_discount|floatformat:0 }}</p>
           {% else %}
           <p class="text-sm text-muted-foreground">Price on request</p>
           {% endif %}

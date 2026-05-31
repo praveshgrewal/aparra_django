@@ -114,14 +114,20 @@ def product_edit(request, product_id):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
+    import json as _json
     from store.models import DiamondSeries
     diamond_series = DiamondSeries.objects.filter(is_active=True).order_by('name')
     calculated_price = product.calculate_price() if product.auto_price_enabled else None
+    all_products = list(Product.objects.filter(is_active=True).exclude(id=product.id).values('id', 'name'))
+    # Use cross_sell_products as the single source; upsell mirrors it
+    existing_related = list(dict.fromkeys(product.cross_sell_products or []))
     return render(request, 'dashboard/products/form.html', {
         'product': product, 'categories': categories,
         'metals': metals, 'purities': purities, 'tax_classes': tax_classes,
         'diamond_series': diamond_series,
         'calculated_price': calculated_price,
+        'all_products_json': _json.dumps(all_products),
+        'existing_related_json': _json.dumps(existing_related),
     })
 
 
@@ -154,6 +160,8 @@ def _save_product(request, product):
     product.availability = p.get('availability', 'in_stock')
     disc = p.get('discount_percentage', '')
     product.discount_percentage = float(disc) if disc else None
+    mc_disc = p.get('making_charge_discount', '')
+    product.making_charge_discount = float(mc_disc) if mc_disc else None
 
     if p.get('metal_id'):
         try:
@@ -182,6 +190,18 @@ def _save_product(request, product):
     if p.get('diamond_details_json'):
         try:
             product.diamond_details = json.loads(p['diamond_details_json'])
+        except Exception:
+            pass
+
+    # Related products
+    if 'cross_sell_json' in p:
+        try:
+            product.cross_sell_products = json.loads(p['cross_sell_json']) or []
+        except Exception:
+            pass
+    if 'upsell_json' in p:
+        try:
+            product.upsell_products = json.loads(p['upsell_json']) or []
         except Exception:
             pass
 
@@ -1079,6 +1099,9 @@ def shipping_view(request):
 @require_POST
 def shipping_save(request):
     kv, _ = KeyValueStore.objects.get_or_create(key='shipping_settings')
+    raw_pins = request.POST.get('blocked_pincodes_raw', '')
+    import re as _re
+    blocked_pincodes = [p.strip() for p in _re.split(r'[\n,]+', raw_pins) if p.strip()]
     data = {
         'free_shipping_enabled': request.POST.get('free_shipping_enabled') == 'on',
         'free_shipping_threshold': float(request.POST.get('free_shipping_threshold', 0) or 0),
@@ -1089,6 +1112,7 @@ def shipping_save(request):
         'estimated_days_standard': request.POST.get('estimated_days_standard', '5-7'),
         'estimated_days_express': request.POST.get('estimated_days_express', '1-2'),
         'delivery_note': request.POST.get('delivery_note', ''),
+        'blocked_pincodes': blocked_pincodes,
     }
     kv.value = data
     kv.save()

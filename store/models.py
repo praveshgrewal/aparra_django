@@ -139,6 +139,7 @@ class Product(models.Model):
     original_price = models.FloatField(null=True, blank=True)
     discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, null=True, blank=True)
     discount_value = models.FloatField(null=True, blank=True)
+    making_charge_discount = models.FloatField(null=True, blank=True, help_text="Discount % applied to making charge and resulting tax")
 
     class Meta:
         ordering = ['-created_at']
@@ -157,28 +158,88 @@ class Product(models.Model):
         return self.manual_price or 0
 
     def calculate_price(self):
+        bp = self.get_price_breakup()
+        return bp.get('total', 0)
+
+    def get_price_breakup(self):
         if not self.metal or not self.purity or not self.tax_class:
-            return 0
+            return {}
         price_per_gram = self.metal.price_per_gram * self.purity.fineness
-        metal_value = price_per_gram * self.net_weight
+        metal_value = round(price_per_gram * self.net_weight)
         if self.making_charge_type == 'fixed':
-            making_charge = self.making_charge_value
+            making_charge_base = round(self.making_charge_value)
         else:
-            making_charge = metal_value * (self.making_charge_value / 100)
+            making_charge_base = round(metal_value * (self.making_charge_value / 100))
         diamond_value = 0
         if self.has_diamonds and self.diamond_details:
             for d in self.diamond_details:
                 if d.get('price') and d['price'] > 0:
                     diamond_value += d['price']
                 else:
-                    base = (d.get('rate_per_carat', 0) * d.get('weight', 0))
-                    diamond_value += base
-        subtotal = metal_value + making_charge + diamond_value
+                    diamond_value += round(d.get('rate_per_carat', 0) * d.get('weight', 0))
+
+        mc_discount = self.making_charge_discount or 0
+        if mc_discount > 0:
+            making_charge_disc = round(making_charge_base * (1 - mc_discount / 100))
+            orig_subtotal = metal_value + making_charge_base + diamond_value
+            disc_subtotal = metal_value + making_charge_disc + diamond_value
+            if self.tax_class.rate_type == 'percentage':
+                gst_orig = round(orig_subtotal * (self.tax_class.rate_value / 100))
+                gst_disc = round(disc_subtotal * (self.tax_class.rate_value / 100))
+            else:
+                gst_orig = gst_disc = round(self.tax_class.rate_value)
+            return {
+                'metal_value': metal_value,
+                'diamond_value': diamond_value,
+                'making_charge': making_charge_disc,
+                'making_charge_original': making_charge_base,
+                'gst': gst_disc,
+                'gst_original': gst_orig,
+                'total': disc_subtotal + gst_disc,
+                'total_original': orig_subtotal + gst_orig,
+            }
+
+        subtotal = metal_value + making_charge_base + diamond_value
         if self.tax_class.rate_type == 'percentage':
-            gst = subtotal * (self.tax_class.rate_value / 100)
+            gst = round(subtotal * (self.tax_class.rate_value / 100))
         else:
-            gst = self.tax_class.rate_value
-        return round(subtotal + gst)
+            gst = round(self.tax_class.rate_value)
+        return {
+            'metal_value': metal_value,
+            'making_charge': making_charge_base,
+            'diamond_value': diamond_value,
+            'gst': gst,
+            'total': subtotal + gst,
+        }
+
+    @property
+    def price_before_discount(self):
+        if self.original_price and self.original_price > 0:
+            return self.original_price
+        if self.making_charge_discount and self.auto_price_enabled:
+            bp = self.computed_price_breakup
+            return bp.get('total_original') if bp else None
+        if self.discount_percentage:
+            return self.display_price or self.manual_price
+        return None
+
+    @property
+    def price_after_discount(self):
+        if self.original_price and self.original_price > 0:
+            return self.display_price or self.manual_price
+        if self.making_charge_discount and self.auto_price_enabled:
+            return self.display_price
+        if self.discount_percentage:
+            base = self.display_price or self.manual_price
+            if base:
+                return round(base * (1 - self.discount_percentage / 100))
+        return self.display_price or self.manual_price
+
+    @property
+    def computed_price_breakup(self):
+        if self.price_breakup:
+            return self.price_breakup
+        return self.get_price_breakup()
 
 
 class ProductReview(models.Model):

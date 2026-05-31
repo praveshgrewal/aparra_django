@@ -27,4 +27,7 @@ urlpatterns = [
     # Wishlist
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('wishlist/toggle/', views.wishlist_toggle, name='wishlist_toggle'),
+
+    # Delivery check
+    path('check-pincode/', views.check_pincode, name='check_pincode'),
 ]

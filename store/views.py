@@ -132,8 +132,9 @@ def product_detail(request, product_id):
     reviews = product.reviews.filter(status='approved')
     avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
 
-    cross_sell = Product.objects.filter(id__in=product.cross_sell_products, is_active=True)
-    upsell = Product.objects.filter(id__in=product.upsell_products, is_active=True)
+    combined_related_ids = list(dict.fromkeys((product.cross_sell_products or []) + (product.upsell_products or [])))
+    cross_sell = Product.objects.filter(id__in=combined_related_ids, is_active=True)
+    upsell = Product.objects.none()
     primary_category = product.categories.first()
     all_metals = Metal.objects.filter(is_active=True)
     all_purities = Purity.objects.filter(is_active=True).select_related('metal')
@@ -361,6 +362,20 @@ def wishlist_toggle(request):
         wishlist.products.add(product)
         in_wishlist = True
     return JsonResponse({'success': True, 'in_wishlist': in_wishlist})
+
+
+def check_pincode(request):
+    pincode = request.GET.get('pincode', '').strip()
+    if not pincode:
+        return JsonResponse({'serviceable': False, 'message': 'Enter a valid pin code.'})
+    try:
+        kv = KeyValueStore.objects.get(key='shipping_settings')
+        blocked = [str(p).strip() for p in (kv.value.get('blocked_pincodes') or [])]
+    except Exception:
+        blocked = []
+    if pincode in blocked:
+        return JsonResponse({'serviceable': False, 'message': 'Sorry, delivery is not available at this pin code.'})
+    return JsonResponse({'serviceable': True, 'message': 'Delivery available at this pin code!'})
 
 
 @require_POST

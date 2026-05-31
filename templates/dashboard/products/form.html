@@ -111,6 +111,32 @@
             </div>
           </div>
         </div>
+        <!-- Related Products -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h2 class="font-semibold text-gray-800 mb-1">Related Products</h2>
+          <p class="text-xs text-gray-400 mb-4">Shown as "You Might Also Like" on the product page.</p>
+
+          <!-- Search -->
+          <div class="relative mb-4">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input id="related-search" type="text" placeholder="Search products to add..."
+                   class="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+                   oninput="filterRelatedSearch(this.value)">
+            <!-- Dropdown results -->
+            <div id="related-results" class="hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-52 overflow-y-auto mt-1"></div>
+          </div>
+
+          <!-- Added products list -->
+          <div>
+            <p class="text-xs font-semibold text-gray-500 mb-2">Added ({{ product.cross_sell_products|length|add:product.upsell_products|length }} products)</p>
+            <div id="related-list" class="space-y-2"></div>
+            <p id="related-empty" class="text-xs text-gray-400 italic {% if product.cross_sell_products or product.upsell_products %}hidden{% endif %}">No related products added yet.</p>
+          </div>
+
+          <!-- Hidden inputs -->
+          <input type="hidden" name="cross_sell_json" id="cross-sell-json">
+          <input type="hidden" name="upsell_json" id="upsell-json">
+        </div>
       </div>
 
       <!-- ===== VARIANTS & PRICING TAB ===== -->
@@ -172,6 +198,13 @@
                 <option value="{{ tc.id }}" {% if product.tax_class_id == tc.id %}selected{% endif %}>{{ tc.name }} ({{ tc.rate_value }}%)</option>
                 {% endfor %}
               </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5">Making Charge Discount (%)</label>
+              <input type="number" name="making_charge_discount" step="0.01" min="0" max="100"
+                     value="{{ product.making_charge_discount|default:'' }}" placeholder="e.g. 50 for 50% off making charge"
+                     class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400">
+              <p class="text-xs text-gray-400 mt-1">Discount applied to making charge &amp; tax only. Shown as strikethrough on product page.</p>
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-1.5">Manual Price (₹) — overrides auto</label>
@@ -749,14 +782,93 @@ function doUploadToLibrary(files) {
     });
 }
 
-// Ensure media_json is always submitted with the form
+// Sync all hidden fields on submit
 document.getElementById('product-form').addEventListener('submit', function() {
   syncHidden();
   syncDiamondHidden();
+  if (typeof syncRelatedHidden === 'function') syncRelatedHidden();
 });
 
 // Init on page load
 renderGrid();
+
+// ── Related Products ────────────────────────────────────────────────────────
+// ── Related Products ────────────────────────────────────────────────────────
+const ALL_PRODUCTS = {{ all_products_json|safe }};
+let relatedIds = {{ existing_related_json|safe }};   // clean JSON array from server
+
+function syncRelatedHidden() {
+  document.getElementById('cross-sell-json').value = JSON.stringify(relatedIds);
+  document.getElementById('upsell-json').value   = JSON.stringify(relatedIds);
+}
+
+function removeRelated(id) {
+  relatedIds = relatedIds.filter(x => x !== id);
+  renderRelated();
+}
+
+function addRelated(id) {
+  if (relatedIds.indexOf(id) !== -1) return;
+  relatedIds.push(id);
+  renderRelated();
+  document.getElementById('related-search').value = '';
+  document.getElementById('related-results').classList.add('hidden');
+}
+
+function renderRelated() {
+  const list  = document.getElementById('related-list');
+  const empty = document.getElementById('related-empty');
+  syncRelatedHidden();
+  if (!relatedIds.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = relatedIds.map(id => {
+    const prod = ALL_PRODUCTS.find(p => p.id === id);
+    const name = prod ? prod.name : id;
+    return `<div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+      <div>
+        <p class="text-sm font-medium text-gray-800">${name}</p>
+        <p class="text-xs text-gray-400">${id}</p>
+      </div>
+      <button type="button" onclick="removeRelated('${id}')"
+              class="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors flex-shrink-0">
+        Remove
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function filterRelatedSearch(q) {
+  const box = document.getElementById('related-results');
+  if (!q.trim()) { box.classList.add('hidden'); return; }
+  const hits = ALL_PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(q.toLowerCase()) && relatedIds.indexOf(p.id) === -1
+  ).slice(0, 8);
+  if (!hits.length) {
+    box.innerHTML = '<p class="px-3 py-2.5 text-xs text-gray-400">No products found</p>';
+    box.classList.remove('hidden');
+    return;
+  }
+  box.innerHTML = hits.map(p =>
+    `<div onclick="addRelated('${p.id}')"
+          class="px-3 py-2.5 hover:bg-amber-50 cursor-pointer border-b border-gray-100 last:border-0">
+      <p class="text-sm font-medium text-gray-800">${p.name}</p>
+      <p class="text-xs text-gray-400">${p.id}</p>
+    </div>`
+  ).join('');
+  box.classList.remove('hidden');
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('related-search')?.closest('.relative');
+  if (wrap && !wrap.contains(e.target))
+    document.getElementById('related-results').classList.add('hidden');
+});
+
+renderRelated();
 
 // ── Diamond Builder ─────────────────────────────────────────────────────────
 let diamonds = [];
